@@ -1,0 +1,268 @@
+# Generalised Machine Learning Benchmarks
+
+A professional-grade, modular benchmarking framework for systematic evaluation of machine learning algorithms and preprocessing techniques across diverse datasets.
+
+## Purpose
+
+This framework enables:
+- **Reproducible Research**: Standardized experimental workflows and seed management
+- **Systematic Comparison**: Fair evaluation of models across consistent metrics
+- **Scalable Benchmarking**: Easily add new datasets, models, and evaluation metrics
+- **Comprehensive Analysis**: Automated result aggregation, visualization, and statistical reporting
+
+## Project Structure
+
+```
+├── configs/              # Experiment configurations (YAML/JSON)
+├── datasets/             # Dataset loading and caching
+├── preprocessing/        # Feature engineering and data transformations
+├── models/              # Model definitions and registrations
+├── metrics/             # Evaluation metrics and scoring
+├── experiments/         # Experiment workflows and benchmarks
+├── visualization/       # Result plotting and visual reports
+├── analysis/            # Statistical analysis and comparisons
+├── results/             # Experiment outputs and metrics
+├── logs/                # Application and experiment logs
+├── main.py              # Entry point
+└── requirements.txt     # Python dependencies
+```
+
+## Folder Responsibilities
+
+| Folder | Purpose |
+|--------|---------|
+| **configs/** | Configuration files for experiments, hyperparameters, and dataset specifications |
+| **datasets/** | Data loaders, dataset utilities, and download/caching mechanisms |
+| **preprocessing/** | Feature scaling, transformation pipelines, and data preparation |
+| **models/** | Model wrappers, registry, and scikit-learn compatible interfaces |
+| **metrics/** | Classification metrics, scoring functions, and result aggregation |
+| **validation/** | Cross-validation framework, fold management, and reproducible benchmarking |
+| **models/** | Model wrappers, registry system, and unified training interface |
+| **experiments/** | Benchmark definitions, experimental workflows, and orchestration |
+| **visualization/** | Result plotting, comparison charts, and visual analysis |
+| **analysis/** | Statistical testing, performance summaries, and comparative reports |
+| **results/** | Generated experiment outputs, metrics files, and raw results |
+| **logs/** | Application logs and experiment execution traces |
+
+## Setup
+
+### 1. Create Virtual Environment
+
+```bash
+# Using venv
+python -m venv venv
+source venv/Scripts/activate  # Windows
+# or
+source venv/bin/activate      # Unix/MacOS
+```
+
+### 2. Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 3. Verify Installation
+
+```bash
+python main.py
+```
+
+Expected output:
+```
+✓ ML Benchmarking Framework initialized successfully
+✓ Project root: ...
+```
+
+## Architecture Principles
+
+### Modularity
+- Each component has a single, well-defined responsibility
+- Minimal coupling between modules
+- Easy to extend or replace individual components
+
+### Reproducibility
+- Configuration-driven experiments
+- Seeded randomness for deterministic results
+- Complete experiment provenance tracking
+
+### Scalability
+- Registry patterns for extensibility
+- Batch processing capabilities
+- Efficient data management
+
+### Production-Quality
+- Type hints for clarity
+- Comprehensive logging
+- Error handling and validation
+
+## Quick Start
+
+### 1. Data Loading and Preprocessing
+
+```python
+from preprocessing import prepare_dataset
+from sklearn.ensemble import RandomForestClassifier
+
+# Load and preprocess data
+X_train, X_test, y_train, y_test, metadata = prepare_dataset(
+    'iris',
+    test_size=0.3,
+    scaling_method='standard'
+)
+
+# Train model
+model = RandomForestClassifier(random_state=42)
+model.fit(X_train, y_train)
+test_score = model.score(X_test, y_test)
+```
+
+### 2. Reproducible Cross-Validation
+
+```python
+from validation import CrossValidator
+from sklearn.ensemble import RandomForestClassifier
+
+# Initialize validator (5-fold CV × 3 reps)
+validator = CrossValidator(n_splits=5, n_repetitions=3, random_state=42)
+
+# Validate model
+X_train, _, y_train, _, _ = prepare_dataset('iris', test_size=0.3)
+model = RandomForestClassifier(random_state=42)
+
+results = validator.validate(
+    X_train, y_train, model,
+    model_name='RandomForest',
+    dataset_name='iris'
+)
+
+# Get summary
+summary = results.get_summary()
+print(f"Accuracy: {summary['accuracy_mean']:.4f} ± {summary['accuracy_std']:.4f}")
+```
+
+### 3. Fair Model Comparison
+
+```python
+from validation import CrossValidator
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.svm import SVC
+
+# Define models
+models = {
+    'RandomForest': RandomForestClassifier(random_state=42),
+    'LogisticRegression': LogisticRegression(random_state=42),
+    'SVM': SVC(probability=True, random_state=42),
+}
+
+# Evaluate all models under identical conditions
+validator = CrossValidator()
+all_results = validator.validate_multiple(
+    X_train, y_train, models,
+    dataset_name='iris'
+)
+
+# Compare results
+for model_name, results in all_results.items():
+    summary = results.get_summary()
+    print(f"{model_name}: {summary['accuracy_mean']:.4f}")
+```
+
+### 4. Model Creation with Registry
+
+```python
+from models import create_model, list_models
+
+# List all available models
+models = list_models()
+print(models)
+
+# Create a model using registry
+model = create_model('RandomForest', n_estimators=100, random_state=42)
+model.fit(X_train, y_train)
+y_pred = model.predict(X_test)
+
+# Compare multiple models fairly
+models = {
+    'lr': create_model('LogisticRegression'),
+    'dt': create_model('DecisionTree'),
+    'rf': create_model('RandomForest'),
+    'svm': create_model('SVM'),
+    'gb': create_model('GradientBoosting'),
+}
+```
+
+### 5. Configure an Experiment
+
+Create `configs/experiment_example.yaml`:
+```yaml
+name: "baseline_comparison"
+datasets:
+  - "iris"
+  - "breast_cancer"
+models:
+  - "logistic_regression"
+  - "random_forest"
+test_size: 0.3
+random_state: 42
+```
+
+### 5. Run Benchmarks
+
+```bash
+python main.py --config configs/experiment_example.yaml
+```
+
+### 6. Analyze Results
+
+Generated outputs:
+- `results/`: Raw metrics and scores
+- `logs/`: Execution logs
+- Visualizations: Performance charts and comparisons
+
+## Dependencies
+
+- **numpy**: Numerical computing
+- **pandas**: Data manipulation
+- **scikit-learn**: ML algorithms and utilities
+- **scipy**: Scientific computing
+- **pyyaml**: Configuration management
+- **pytest**: Testing framework
+- **tqdm**: Progress bars
+
+## Development Guidelines
+
+### Code Style
+- Follow PEP 8 conventions
+- Use type hints for function signatures
+- Include docstrings for modules, classes, and functions
+
+### Testing
+```bash
+pytest tests/
+```
+
+### Linting
+```bash
+black .
+flake8 .
+mypy .
+```
+
+## Future Extensions
+
+This architecture supports:
+- Deep learning frameworks (PyTorch, TensorFlow)
+- Distributed benchmarking
+- Hyperparameter optimization
+- AutoML integration
+- Real-time monitoring dashboards
+
+## License
+
+[Specify your license]
+
+## Authors
+
+[Your name/team]

@@ -1,0 +1,16 @@
+{"timestamp": "2026-05-07T19:03:39.620929Z", "level": "INFO", "message": "Starting experiment save", "meta": {"dataset": "demo_dataset_storage"}}
+{"timestamp": "2026-05-07T19:03:47.754769Z", "level": "INFO", "message": "Environment captured", "meta": {"git": {"git_commit": null, "git_dirty": null}, "python": "3.11.0 (main, Oct 24 2022, 18:26:48) [MSC v.1933 64 bit (AMD64)]"}}
+{"timestamp": "2026-05-07T19:03:47.756194Z", "level": "INFO", "message": "Saved experiment config", "meta": {"path": "results\\demo_dataset_storage\\config.json"}}
+{"timestamp": "2026-05-07T19:03:47.758257Z", "level": "INFO", "message": "Saved raw results", "meta": {"path": "results\\demo_dataset_storage\\raw_results.csv", "models": 3}}
+{"timestamp": "2026-05-07T19:03:47.760226Z", "level": "INFO", "message": "Saved normalized results", "meta": {"path": "results\\demo_dataset_storage\\normalized_results.csv"}}
+{"timestamp": "2026-05-07T19:03:47.761229Z", "level": "INFO", "message": "Saved CBS scores", "meta": {"path": "results\\demo_dataset_storage\\cbs_scores.csv"}}
+{"timestamp": "2026-05-07T19:03:53.200202Z", "level": "INFO", "message": "Generated plots", "meta": {"plots_dir": "results\\demo_dataset_storage\\plots"}}
+{"timestamp": "2026-05-07T19:03:53.200202Z", "level": "INFO", "message": "Experiment save complete", "meta": {"saved_files": {"raw": "results\\demo_dataset_storage\\raw_results.csv", "normalized": "results\\demo_dataset_storage\\normalized_results.csv", "cbs": "results\\demo_dataset_storage\\cbs_scores.csv", "config": "results\\demo_dataset_storage\\config.json"}}}
+{"timestamp": "2026-05-07T19:03:58.455102Z", "level": "INFO", "message": "Starting experiment save", "meta": {"dataset": "demo_dataset_storage"}}
+{"timestamp": "2026-05-07T19:03:59.788391Z", "level": "INFO", "message": "Environment captured", "meta": {"git": {"git_commit": null, "git_dirty": null}, "python": "3.11.0 (main, Oct 24 2022, 18:26:48) [MSC v.1933 64 bit (AMD64)]"}}
+{"timestamp": "2026-05-07T19:03:59.790325Z", "level": "INFO", "message": "Saved experiment config", "meta": {"path": "results\\demo_dataset_storage\\config.json"}}
+{"timestamp": "2026-05-07T19:03:59.793543Z", "level": "INFO", "message": "Saved raw results", "meta": {"path": "results\\demo_dataset_storage\\raw_results.csv", "models": 3}}
+{"timestamp": "2026-05-07T19:03:59.794560Z", "level": "INFO", "message": "Saved normalized results", "meta": {"path": "results\\demo_dataset_storage\\normalized_results.csv"}}
+{"timestamp": "2026-05-07T19:03:59.795566Z", "level": "INFO", "message": "Saved CBS scores", "meta": {"path": "results\\demo_dataset_storage\\cbs_scores.csv"}}
+{"timestamp": "2026-05-07T19:04:04.260088Z", "level": "INFO", "message": "Generated plots", "meta": {"plots_dir": "results\\demo_dataset_storage\\plots"}}
+{"timestamp": "2026-05-07T19:04:04.260088Z", "level": "INFO", "message": "Experiment save complete", "meta": {"saved_files": {"raw": "results\\demo_dataset_storage\\raw_results.csv", "normalized": "results\\demo_dataset_storage\\normalized_results.csv", "cbs": "results\\demo_dataset_storage\\cbs_scores.csv", "config": "results\\demo_dataset_storage\\config.json"}}}

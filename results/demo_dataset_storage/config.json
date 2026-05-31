@@ -1,0 +1,22 @@
+{
+  "config": {
+    "task": "binary_classification",
+    "dataset_version": "v1.2",
+    "cv_folds": 5,
+    "notes": "Demo run for storage example"
+  },
+  "meta": {
+    "dataset": "demo_dataset_storage",
+    "timestamp": "2026-05-07T19:03:59.788391Z",
+    "seed": 42,
+    "project_root": "C:\\Users\\mshar\\Projects\\Generalised Machine learning Benchmarks",
+    "git": {
+      "git_commit": null,
+      "git_dirty": null
+    },
+    "env": {
+      "python_version": "3.11.0 (main, Oct 24 2022, 18:26:48) [MSC v.1933 64 bit (AMD64)]",
+      "platform": "Windows-10-10.0.26200-SP0"
+    }
+  }
+}
