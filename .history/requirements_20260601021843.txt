@@ -1,13 +1,19 @@
-numpy==1.26.4
+# Core Dependencies
+numpy==2.4.6
 pandas==2.0.3
 scikit-learn==1.3.0
+
+# Data Handling
 scipy==1.11.1
 
+# Logging and Configuration
 pyyaml==6.0
 python-dotenv==1.0.0
 
+# Utilities
 tqdm==4.65.0
 
+# Development
 pytest==7.4.0
 black==23.7.0
 flake8==6.0.0
