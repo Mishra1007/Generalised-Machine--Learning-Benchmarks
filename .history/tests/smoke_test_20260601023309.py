@@ -1,16 +1,25 @@
+"""Integration smoke test: small dataset through runner->executor->storage.
+
+This test is lightweight and intended to be runnable in CI.
+It creates a tiny CSV, registers it, writes a temp YAML config, runs the runner,
+and asserts that expected output files are produced.
+"""
 import sys
 from pathlib import Path
-
-import os
-import shutil
-from pathlib import Path
-import json
-import tempfile
 
 ROOT = Path(__file__).resolve().parent.parent
 
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
+
+
+
+    
+import os
+import shutil
+from pathlib import Path
+import json
+import tempfile
 
 import matplotlib
 matplotlib.use('Agg')

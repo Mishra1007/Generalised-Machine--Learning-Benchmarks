@@ -1,16 +1,27 @@
-import sys
-from pathlib import Path
+"""Integration smoke test: small dataset through runner->executor->storage.
 
+This test is lightweight and intended to be runnable in CI.
+It creates a tiny CSV, registers it, writes a temp YAML config, runs the runner,
+and asserts that expected output files are produced.
+"""
 import os
 import shutil
 from pathlib import Path
 import json
 import tempfile
 
-ROOT = Path(__file__).resolve().parent.parent
+"""Note: this test imports the full stack (runner, executor, storage) and is not a unit test. It is intended as a smoke test to catch major integration issues. For more granular testing, see the unit tests in tests/test_metadata.py and tests/test_reproducibility_framework.py."""
+import sys
+from pathlib import Path
 
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
+print("CWD:", Path.cwd())
+print("SCRIPT:", Path(__file__).resolve())
+print("SYS.PATH:")
+for p in sys.path:
+    print(" ", p)
+
+
+
 
 import matplotlib
 matplotlib.use('Agg')
