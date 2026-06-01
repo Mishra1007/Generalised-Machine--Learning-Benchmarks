@@ -59,8 +59,14 @@ results/plots/*
 results/reports/*
 logs/*.log
 datasets/cache/*
+*.csv
+
 
 # Temporary files
 *.tmp
 *.bak
 temp/
+
+#history files
+.history/
+
