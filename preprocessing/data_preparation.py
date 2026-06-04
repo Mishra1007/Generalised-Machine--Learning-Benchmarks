@@ -247,6 +247,7 @@ def prepare_dataset(
     random_state: int = 42,
     scaling_method: str = 'standard',
     encoding_method: str = 'onehot',
+    stratify: bool = True,
 ) -> Tuple[np.ndarray, np.ndarray, pd.Series, pd.Series, Dict[str, Any]]:
     """
     Quick data preparation.
@@ -270,5 +271,6 @@ def prepare_dataset(
         test_size=test_size,
         scaling_method=scaling_method,
         encoding_method=encoding_method,
+        stratify=stratify,
     )
     return X_train, X_test, y_train, y_test, prep.get_dataset_metadata()

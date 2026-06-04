@@ -16,12 +16,51 @@ def _as_array(values: Iterable[float]) -> np.ndarray:
     return np.asarray(list(values), dtype=float)
 
 
-def friedman_test(score_matrix: np.ndarray, model_names: Optional[Sequence[str]] = None) -> Dict[str, Any]:
+def validate_score_matrix(
+    score_matrix: np.ndarray,
+    model_names: Optional[Sequence[str]] = None,
+    *,
+    procedure: str,
+    min_observations: int = 1,
+    min_models: int = 2,
+) -> np.ndarray:
+    """Validate benchmark score matrix orientation.
+
+    Contract: rows are aligned observations (folds/repetition-folds/datasets)
+    and columns are models. This is the orientation required by Friedman,
+    Nemenyi, pairwise Wilcoxon, ranking, and per-model confidence intervals.
+    """
     matrix = np.asarray(score_matrix, dtype=float)
-    if matrix.ndim != 2 or matrix.shape[1] < 2:
-        raise ValueError('Friedman test requires a 2D matrix with at least two models')
+    if matrix.ndim != 2:
+        raise ValueError(f'{procedure} requires a 2D score_matrix with rows=observations and columns=models')
+    if matrix.shape[0] < min_observations:
+        raise ValueError(f'{procedure} requires at least {min_observations} aligned observations')
+    if matrix.shape[1] < min_models:
+        raise ValueError(f'{procedure} requires at least {min_models} model columns')
     if model_names is not None and len(model_names) != matrix.shape[1]:
         raise ValueError('Model names must match the number of columns in score_matrix')
+    if not np.all(np.isfinite(matrix)):
+        raise ValueError(f'{procedure} requires finite numeric scores')
+    return matrix
+
+
+def validate_paired_observations(x: Iterable[float], y: Iterable[float], *, procedure: str) -> Tuple[np.ndarray, np.ndarray]:
+    """Validate paired vectors aligned by identical observation order."""
+    arr_x = _as_array(x)
+    arr_y = _as_array(y)
+    if arr_x.ndim != 1 or arr_y.ndim != 1:
+        raise ValueError(f'{procedure} requires 1D paired observation vectors')
+    if len(arr_x) != len(arr_y):
+        raise ValueError(f'{procedure} requires paired samples of equal length')
+    if len(arr_x) < 1:
+        raise ValueError(f'{procedure} requires at least one paired observation')
+    if not np.all(np.isfinite(arr_x)) or not np.all(np.isfinite(arr_y)):
+        raise ValueError(f'{procedure} requires finite numeric paired observations')
+    return arr_x, arr_y
+
+
+def friedman_test(score_matrix: np.ndarray, model_names: Optional[Sequence[str]] = None) -> Dict[str, Any]:
+    matrix = validate_score_matrix(score_matrix, model_names, procedure='Friedman test', min_observations=2)
 
     columns = [matrix[:, idx] for idx in range(matrix.shape[1])]
     statistic, p_value = stats.friedmanchisquare(*columns)
@@ -35,10 +74,7 @@ def friedman_test(score_matrix: np.ndarray, model_names: Optional[Sequence[str]]
 
 
 def wilcoxon_signed_rank(x: Iterable[float], y: Iterable[float], zero_method: str = 'wilcox', alternative: str = 'two-sided') -> Dict[str, Any]:
-    arr_x = _as_array(x)
-    arr_y = _as_array(y)
-    if len(arr_x) != len(arr_y):
-        raise ValueError('Wilcoxon test requires paired samples of equal length')
+    arr_x, arr_y = validate_paired_observations(x, y, procedure='Wilcoxon test')
 
     statistic, p_value = stats.wilcoxon(arr_x, arr_y, zero_method=zero_method, alternative=alternative, mode='auto')
     return {
@@ -78,11 +114,7 @@ def bootstrap_confidence_interval(values: Iterable[float], confidence: float = 0
 
 
 def rank_models(score_matrix: np.ndarray, model_names: Optional[Sequence[str]] = None, higher_is_better: bool = True) -> pd.DataFrame:
-    matrix = np.asarray(score_matrix, dtype=float)
-    if matrix.ndim != 2:
-        raise ValueError('score_matrix must be 2D')
-    if model_names is not None and len(model_names) != matrix.shape[1]:
-        raise ValueError('Model names must match the number of columns in score_matrix')
+    matrix = validate_score_matrix(score_matrix, model_names, procedure='Model ranking')
 
     names = list(model_names) if model_names is not None else [f'model_{i}' for i in range(matrix.shape[1])]
     means = matrix.mean(axis=0)

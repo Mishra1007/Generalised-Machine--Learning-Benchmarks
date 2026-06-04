@@ -244,6 +244,8 @@ def _build_score_matrix(validation_results: Dict[str, Any], primary_metric: str 
             metrics = getattr(fold, 'metrics', {}) or {}
             if primary_metric in metrics:
                 fold_key = (getattr(fold, 'repetition_id', None), getattr(fold, 'fold_id', None))
+                if fold_key in scores:
+                    raise ValueError(f'Duplicate fold observation key for model {model_name}: {fold_key}')
                 scores[fold_key] = metrics[primary_metric]
         if scores:
             model_names.append(model_name)
@@ -451,7 +453,7 @@ def save_experiment_results(dataset_name: str, models_summaries: Dict[str, Dict[
                     idx_a = model_names.index(row['model_a'])
                     idx_b = model_names.index(row['model_b'])
                     matrix_arr = np.asarray(matrix, dtype=float)
-                    effect = effect_size_summary(matrix_arr[:, idx_a], matrix_arr[:, idx_b])
+                    effect = effect_size_summary(matrix_arr[:, idx_a], matrix_arr[:, idx_b], paired=True)
                     effect_rows.append(effect)
                 if effect_rows:
                     effect_df = pd.DataFrame(effect_rows)

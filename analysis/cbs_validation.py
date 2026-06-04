@@ -14,6 +14,11 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 
+from analysis.cbs_reports import write_cbs_validation_report
+from analysis.cbs_sensitivity import (
+    monte_carlo_weight_analysis,
+    perturb_weight_grid,
+)
 from metrics.cbs import CBS_WEIGHTS
 
 try:
@@ -45,6 +50,7 @@ class CBSValidationArtifacts:
     weight_robustness_path: str
     metric_influence_path: str
     ranking_stability_path: str
+    monte_carlo_samples_path: str
     correlation_path: str
     normalization_path: str
     plots: Dict[str, Tuple[str, str]]
@@ -233,50 +239,32 @@ def sensitivity_analysis(cbs_frame: pd.DataFrame, perturbation: float = 0.01, no
 
 
 def weight_robustness_analysis(cbs_frame: pd.DataFrame, perturbation_levels: Sequence[float] = (0.05, 0.10, 0.20), weights: Dict[str, float] = CBS_WEIGHTS) -> pd.DataFrame:
-    weights = _normalize_weights(weights)
-    baseline = cbs_frame[['model', 'cbs', 'baseline_rank']].copy()
-    rows: List[Dict[str, Any]] = []
-
-    for level in perturbation_levels:
-        for metric in CBS_METRICS:
-            for direction in (-1.0, 1.0):
-                perturbed_weights = _apply_weight_perturbation(weights, metric, level * direction)
-                perturbed = cbs_frame.copy()
-                perturbed['perturbed_cbs'] = perturbed.apply(lambda row: _compute_cbs_row(row, perturbed_weights), axis=1)
-                perturbed['perturbed_rank'] = _rank_models(perturbed['perturbed_cbs'], higher_is_better=True)
-                merged = baseline.merge(perturbed[['model', 'perturbed_cbs', 'perturbed_rank']], on='model')
-                rank_corr = stats.spearmanr(merged['baseline_rank'], merged['perturbed_rank']).correlation
-
-                for _, row in merged.iterrows():
-                    rows.append({
-                        'model': row['model'],
-                        'metric': metric,
-                        'perturbation_level': level,
-                        'direction': 'increase' if direction > 0 else 'decrease',
-                        'baseline_cbs': row['cbs'],
-                        'perturbed_cbs': row['perturbed_cbs'],
-                        'score_delta': row['perturbed_cbs'] - row['cbs'],
-                        'baseline_rank': row['baseline_rank'],
-                        'perturbed_rank': row['perturbed_rank'],
-                        'rank_shift': row['perturbed_rank'] - row['baseline_rank'],
-                        'ranking_stability': rank_corr,
-                        'baseline_weight': weights[metric],
-                        'perturbed_weight': perturbed_weights[metric],
-                    })
-
-    return pd.DataFrame(rows)
+    data = perturb_weight_grid(cbs_frame, perturbation_levels=perturbation_levels, weights=weights)
+    if not data.empty:
+        data['ranking_stability'] = data['spearman_rank_correlation']
+    return data
 
 
 def metric_dominance_analysis(cbs_frame: pd.DataFrame, weights: Dict[str, float] = CBS_WEIGHTS) -> pd.DataFrame:
     rows: List[Dict[str, Any]] = []
+    contribution_vars = {}
+    total_contribution_variance = 0.0
+    for metric in CBS_METRICS:
+        variance = float(cbs_frame[f'contribution__{metric}'].var(ddof=1)) if len(cbs_frame) > 1 else 0.0
+        contribution_vars[metric] = variance
+        total_contribution_variance += max(0.0, variance)
+
     for metric in CBS_METRICS:
         contribution = cbs_frame[f'contribution__{metric}']
         share = cbs_frame[f'contribution_pct__{metric}']
         loo_scores = cbs_frame.apply(lambda row: _compute_cbs_row(row.drop(labels=[metric]), {k: v for k, v in weights.items() if k != metric}) / max(1e-12, 1.0 - weights[metric]), axis=1)
+        variance_contribution_pct = contribution_vars[metric] / total_contribution_variance if total_contribution_variance > 0 else np.nan
         rows.append({
             'metric': metric,
             'weight': weights[metric],
             'mean_contribution': float(contribution.mean()),
+            'contribution_variance': contribution_vars[metric],
+            'variance_contribution_pct': float(variance_contribution_pct),
             'mean_contribution_pct': float(share.mean()),
             'max_contribution_pct': float(share.max()),
             'min_contribution_pct': float(share.min()),
@@ -353,6 +341,15 @@ def normalization_validation(raw: pd.DataFrame, normalized: pd.DataFrame) -> pd.
         raw_rank = raw_values.rank(ascending=False, method='average')
         norm_rank = norm_values.rank(ascending=False, method='average')
         spearman = stats.spearmanr(raw_values, norm_values)
+        bounded = bool(((norm_values >= 0.0) & (norm_values <= 1.0)).all())
+        ranking_distortion = float((raw_rank - norm_rank).abs().sum())
+        artifact_reasons = []
+        if not bounded:
+            artifact_reasons.append('normalized values outside [0,1]')
+        if raw_values.nunique() > 1 and norm_values.nunique() <= 1:
+            artifact_reasons.append('non-constant raw values collapsed to one normalized value')
+        if ranking_distortion > 0:
+            artifact_reasons.append('raw-to-normalized rank distortion')
 
         rows.append({
             'metric': metric,
@@ -365,9 +362,12 @@ def normalization_validation(raw: pd.DataFrame, normalized: pd.DataFrame) -> pd.
             'compression_ratio': float(norm_values.std(ddof=1) / raw_values.std(ddof=1)) if raw_values.std(ddof=1) else np.nan,
             'rank_correlation': float(spearman.correlation),
             'rank_p_value': float(spearman.pvalue),
-            'ranking_distortion': float((raw_rank - norm_rank).abs().sum()),
+            'ranking_distortion': ranking_distortion,
             'unique_raw_values': int(raw_values.nunique()),
             'unique_normalized_values': int(norm_values.nunique()),
+            'bounded_0_1': bounded,
+            'artifact_flag': bool(artifact_reasons),
+            'artifact_reason': '; '.join(artifact_reasons),
         })
 
     proxy_weights = _normalize_weights(CBS_WEIGHTS)
@@ -389,78 +389,51 @@ def normalization_validation(raw: pd.DataFrame, normalized: pd.DataFrame) -> pd.
         proxy_df = pd.DataFrame(raw_proxy, columns=['model', 'raw_proxy_cbs'])
         merged = norm_map[['cbs']].join(proxy_df.set_index('model'), how='inner')
         if len(merged) > 1:
+            norm_values = merged['cbs']
+            raw_values = merged['raw_proxy_cbs']
+            raw_rank = raw_values.rank(ascending=False)
+            norm_rank = norm_values.rank(ascending=False)
+            bounded = bool(((norm_values >= 0.0) & (norm_values <= 1.0)).all())
+            ranking_distortion = float((raw_rank - norm_rank).abs().sum())
+            artifact_reasons = []
+            if not bounded:
+                artifact_reasons.append('CBS outside [0,1]')
+            if raw_values.nunique() > 1 and norm_values.nunique() <= 1:
+                artifact_reasons.append('raw proxy values collapsed to one normalized CBS value')
+            if ranking_distortion > 0:
+                artifact_reasons.append('raw proxy rank differs from normalized CBS rank')
             rows.append({
                 'metric': 'cbs_proxy',
-                'raw_min': float(merged['raw_proxy_cbs'].min()),
-                'raw_max': float(merged['raw_proxy_cbs'].max()),
-                'raw_std': float(merged['raw_proxy_cbs'].std(ddof=1)),
-                'normalized_min': float(merged['cbs'].min()),
-                'normalized_max': float(merged['cbs'].max()),
-                'normalized_std': float(merged['cbs'].std(ddof=1)),
-                'compression_ratio': float(merged['cbs'].std(ddof=1) / merged['raw_proxy_cbs'].std(ddof=1)) if merged['raw_proxy_cbs'].std(ddof=1) else np.nan,
-                'rank_correlation': float(stats.spearmanr(merged['raw_proxy_cbs'], merged['cbs']).correlation),
-                'rank_p_value': float(stats.spearmanr(merged['raw_proxy_cbs'], merged['cbs']).pvalue),
-                'ranking_distortion': float((merged['raw_proxy_cbs'].rank(ascending=False) - merged['cbs'].rank(ascending=False)).abs().sum()),
-                'unique_raw_values': int(merged['raw_proxy_cbs'].nunique()),
-                'unique_normalized_values': int(merged['cbs'].nunique()),
+                'raw_min': float(raw_values.min()),
+                'raw_max': float(raw_values.max()),
+                'raw_std': float(raw_values.std(ddof=1)),
+                'normalized_min': float(norm_values.min()),
+                'normalized_max': float(norm_values.max()),
+                'normalized_std': float(norm_values.std(ddof=1)),
+                'compression_ratio': float(norm_values.std(ddof=1) / raw_values.std(ddof=1)) if raw_values.std(ddof=1) else np.nan,
+                'rank_correlation': float(stats.spearmanr(raw_values, norm_values).correlation),
+                'rank_p_value': float(stats.spearmanr(raw_values, norm_values).pvalue),
+                'ranking_distortion': ranking_distortion,
+                'unique_raw_values': int(raw_values.nunique()),
+                'unique_normalized_values': int(norm_values.nunique()),
+                'bounded_0_1': bounded,
+                'artifact_flag': bool(artifact_reasons),
+                'artifact_reason': '; '.join(artifact_reasons),
             })
 
     return pd.DataFrame(rows)
 
 
-def monte_carlo_stability(cbs_frame: pd.DataFrame, iterations: int = 2000, noise_std: float = 0.02, random_state: int = 42, fold_std: Optional[pd.Series] = None) -> pd.DataFrame:
-    rng = np.random.default_rng(random_state)
-    baseline_ranking = cbs_frame.sort_values(['cbs', 'model'], ascending=[False, True])['model'].tolist()
-    rows: List[Dict[str, Any]] = []
-
-    for _, row in cbs_frame.iterrows():
-        model = row['model']
-        model_noise = _safe_float(fold_std.loc[model]) if fold_std is not None and model in fold_std.index else noise_std
-        samples = []
-        top_rank_hits = 0
-        top3_hits = 0
-        rank_positions = []
-        for _ in range(iterations):
-            noisy_row = row.copy()
-            for metric in CBS_METRICS:
-                noisy_row[metric] = float(np.clip(_safe_float(noisy_row[metric]) + rng.normal(0.0, model_noise), 0.0, 1.0))
-            score = _compute_cbs_row(noisy_row, CBS_WEIGHTS)
-            samples.append(score)
-            rank_positions.append(score)
-
-        # compute rankings by sampling all models jointly so that rank consistency is meaningful
-        top1 = 0
-        top3 = 0
-        rank_values = []
-        for _ in range(iterations):
-            perturbed = cbs_frame.copy()
-            for metric in CBS_METRICS:
-                perturbed[metric] = np.clip(perturbed[metric] + rng.normal(0.0, model_noise, size=len(perturbed)), 0.0, 1.0)
-            perturbed['cbs_mc'] = perturbed.apply(lambda r: _compute_cbs_row(r, CBS_WEIGHTS), axis=1)
-            ordered = perturbed.sort_values(['cbs_mc', 'model'], ascending=[False, True])['model'].tolist()
-            if ordered and ordered[0] == baseline_ranking[0]:
-                top1 += 1
-            if model in ordered[:3]:
-                top3 += 1
-            rank_values.append(ordered.index(model) + 1)
-
-        rank_values = np.asarray(rank_values, dtype=float)
-        samples = np.asarray(samples, dtype=float)
-        rows.append({
-            'model': model,
-            'baseline_rank': float(baseline_ranking.index(model) + 1),
-            'mean_rank': float(rank_values.mean()),
-            'rank_std': float(rank_values.std(ddof=1)),
-            'top1_probability': float(top1 / iterations),
-            'top3_probability': float(top3 / iterations),
-            'cbs_mean': float(samples.mean()),
-            'cbs_std': float(samples.std(ddof=1)),
-            'cbs_lower': float(np.quantile(samples, 0.025)),
-            'cbs_upper': float(np.quantile(samples, 0.975)),
-            'noise_std': float(model_noise),
-        })
-
-    return pd.DataFrame(rows)
+def monte_carlo_stability(cbs_frame: pd.DataFrame, iterations: int = 5000, noise_std: float = 0.02, random_state: int = 42, fold_std: Optional[pd.Series] = None) -> pd.DataFrame:
+    summary, _ = monte_carlo_weight_analysis(cbs_frame, n_samples=iterations, random_state=random_state)
+    summary = summary.rename(columns={
+        'mean_sampled_cbs': 'cbs_mean',
+        'std_sampled_cbs': 'cbs_std',
+        'top_model_frequency': 'top1_probability',
+    })
+    summary['top3_probability'] = np.nan
+    summary['noise_std'] = np.nan
+    return summary
 
 
 def _render_significance_text(df: pd.DataFrame) -> str:
@@ -605,12 +578,80 @@ def _plot_correlation_heatmap(cbs_frame: pd.DataFrame, out_dir: Path) -> Tuple[s
 def _plot_stability_distributions(ranking_stability: pd.DataFrame, out_dir: Path) -> Tuple[str, str]:
     _require_matplotlib()
     fig, ax = plt.subplots(figsize=(9, 5))
-    ax.hist(ranking_stability['cbs_mean'], bins=min(10, len(ranking_stability)), alpha=0.8, color='#2f855a')
+    
+    # Handle NaN values
+    data_to_plot = ranking_stability['cbs_mean'].dropna()
+    if len(data_to_plot) == 0:
+        ax.text(0.5, 0.5, 'No valid stability data available', 
+                ha='center', va='center', transform=ax.transAxes, fontsize=12)
+    else:
+        ax.hist(data_to_plot, bins=min(10, len(data_to_plot)), alpha=0.8, color='#2f855a')
+    
     ax.set_title('CBS Stability Distribution')
     ax.set_xlabel('Monte Carlo mean CBS')
     ax.set_ylabel('Count')
     fig.tight_layout()
     base = out_dir / 'stability_distribution'
+    png = f'{base}.png'
+    pdf = f'{base}.pdf'
+    fig.savefig(png, dpi=300, bbox_inches='tight')
+    fig.savefig(pdf, dpi=300, bbox_inches='tight')
+    plt.close(fig)
+    return png, pdf
+
+
+def _plot_metric_contributions(influence: pd.DataFrame, out_dir: Path) -> Tuple[str, str]:
+    _require_matplotlib()
+    fig, ax = plt.subplots(figsize=(9, 5))
+    
+    # Handle empty or missing data
+    if influence.empty or 'variance_contribution_pct' not in influence.columns:
+        ax.text(0.5, 0.5, 'No metric contribution data available', 
+                ha='center', va='center', transform=ax.transAxes, fontsize=12)
+    else:
+        data = influence.sort_values('variance_contribution_pct', ascending=True)
+        if len(data) > 0:
+            ax.barh(data['metric'], data['variance_contribution_pct'] * 100.0, color='#805ad5')
+    
+    ax.set_title('CBS Metric Contribution To Variance')
+    ax.set_xlabel('Contribution to CBS variance (%)')
+    fig.tight_layout()
+    base = out_dir / 'metric_contribution_plot'
+    png = f'{base}.png'
+    pdf = f'{base}.pdf'
+    fig.savefig(png, dpi=300, bbox_inches='tight')
+    fig.savefig(pdf, dpi=300, bbox_inches='tight')
+    plt.close(fig)
+    return png, pdf
+
+
+def _plot_ranking_stability(ranking_stability: pd.DataFrame, out_dir: Path) -> Tuple[str, str]:
+    _require_matplotlib()
+    fig, ax = plt.subplots(figsize=(9, 5))
+    
+    # Handle empty or invalid data
+    if ranking_stability.empty or 'mean_rank' not in ranking_stability.columns:
+        ax.text(0.5, 0.5, 'No ranking stability data available', 
+                ha='center', va='center', transform=ax.transAxes, fontsize=12)
+    else:
+        # Filter out rows with NaN mean_rank
+        data = ranking_stability.dropna(subset=['mean_rank']).sort_values('baseline_rank', na_position='last')
+        if len(data) > 0:
+            ax.errorbar(data.index, data['mean_rank'], 
+                       yerr=data['rank_std'].fillna(0.0), 
+                       fmt='o', color='#2b6cb0', capsize=4)
+            ax.set_xticks(range(len(data)))
+            ax.set_xticklabels(data.index, rotation=30)
+            ax.invert_yaxis()
+        else:
+            ax.text(0.5, 0.5, 'No valid ranking data', 
+                    ha='center', va='center', transform=ax.transAxes, fontsize=12)
+    
+    ax.set_title('Monte Carlo Weight Ranking Stability')
+    ax.set_xlabel('Model')
+    ax.set_ylabel('Mean rank under sampled weights')
+    fig.tight_layout()
+    base = out_dir / 'ranking_stability_plot'
     png = f'{base}.png'
     pdf = f'{base}.pdf'
     fig.savefig(png, dpi=300, bbox_inches='tight')
@@ -646,12 +687,18 @@ def run_cbs_validation(results_dir: str | Path, output_dir: Optional[str | Path]
     influence = metric_dominance_analysis(cbs_frame)
     correlations, redundancy = correlation_analysis(cbs_frame)
     normalization = normalization_validation(raw, cbs_frame)
-    ranking_stability = monte_carlo_stability(cbs_frame, iterations=mc_iterations, noise_std=noise_std, random_state=random_state, fold_std=fold_std)
+    ranking_stability, monte_carlo_samples = monte_carlo_weight_analysis(cbs_frame, n_samples=mc_iterations, random_state=random_state)
+    ranking_stability = ranking_stability.rename(columns={
+        'mean_sampled_cbs': 'cbs_mean',
+        'std_sampled_cbs': 'cbs_std',
+        'top_model_frequency': 'top1_probability',
+    })
 
     sensitivity_path = out_root / 'sensitivity_analysis.csv'
     weight_path = out_root / 'weight_robustness.csv'
     influence_path = out_root / 'metric_influence.csv'
     ranking_path = out_root / 'ranking_stability.csv'
+    mc_samples_path = out_root / 'monte_carlo_weight_samples.csv'
     correlation_path = out_root / 'correlation_analysis.csv'
     normalization_path = out_root / 'normalization_validation.csv'
 
@@ -659,31 +706,34 @@ def run_cbs_validation(results_dir: str | Path, output_dir: Optional[str | Path]
     weight_robustness.to_csv(weight_path, index=False)
     influence.to_csv(influence_path, index=False)
     ranking_stability.to_csv(ranking_path, index=False)
+    monte_carlo_samples.to_csv(mc_samples_path, index=False)
     correlations.to_csv(correlation_path, index=False)
     normalization.to_csv(normalization_path, index=False)
     if not redundancy.empty:
         redundancy.to_csv(out_root / 'redundancy_pairs.csv', index=False)
 
-    report_path = _write_report(
-        out_root,
-        sensitivity,
-        sensitivity_ranking,
-        weight_robustness,
-        influence,
-        correlations,
-        redundancy,
-        normalization,
-        ranking_stability,
-    )
-
     plots_dir = out_root / 'plots'
     plots_dir.mkdir(parents=True, exist_ok=True)
     plots = {
-        'tornado_plot': _plot_tornado(sensitivity_ranking, plots_dir),
-        'weight_sensitivity_plot': _plot_weight_sensitivity(weight_robustness, plots_dir),
+        'sensitivity_plot': _plot_tornado(sensitivity_ranking, plots_dir),
+        'weight_impact_plot': _plot_weight_sensitivity(weight_robustness, plots_dir),
+        'ranking_stability_plot': _plot_ranking_stability(ranking_stability, plots_dir),
+        'metric_contribution_plot': _plot_metric_contributions(influence, plots_dir),
         'correlation_heatmap': _plot_correlation_heatmap(cbs_frame, plots_dir),
         'stability_distribution': _plot_stability_distributions(ranking_stability, plots_dir),
     }
+
+    plot_paths = {name: pair[0] for name, pair in plots.items()}
+    report_path = write_cbs_validation_report(
+        out_root / 'cbs_validation_report.md',
+        dataset_name=str(results_dir),
+        baseline=cbs_frame,
+        weight_robustness=weight_robustness,
+        dominance=influence,
+        normalization=normalization,
+        monte_carlo=ranking_stability,
+        plots=plot_paths,
+    )
 
     return CBSValidationArtifacts(
         report_path=report_path,
@@ -691,6 +741,7 @@ def run_cbs_validation(results_dir: str | Path, output_dir: Optional[str | Path]
         weight_robustness_path=str(weight_path),
         metric_influence_path=str(influence_path),
         ranking_stability_path=str(ranking_path),
+        monte_carlo_samples_path=str(mc_samples_path),
         correlation_path=str(correlation_path),
         normalization_path=str(normalization_path),
         plots=plots,

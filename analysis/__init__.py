@@ -12,6 +12,7 @@ from analysis.cbs_validation import CBSValidationArtifacts, run_cbs_validation
 from analysis.significance import (
     global_significance_analysis,
     nemenyi_critical_difference,
+    nemenyi_q_alpha,
     nemenyi_test,
     pairwise_wilcoxon,
 )
@@ -36,6 +37,7 @@ __all__ = [
     'interpret_cohens_d',
     'mean_confidence_interval',
     'nemenyi_critical_difference',
+    'nemenyi_q_alpha',
     'nemenyi_test',
     'pairwise_wilcoxon',
     'rank_models',

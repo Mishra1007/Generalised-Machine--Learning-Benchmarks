@@ -78,6 +78,7 @@ class ExperimentExecutor:
             random_state=seed,
             scaling_method=dataset_cfg.get('preprocessing', {}).get('scaling', 'standard'),
             encoding_method=dataset_cfg.get('preprocessing', {}).get('encoding', 'onehot'),
+            stratify=dataset_cfg.get('stratify', True),
         )
         dataset_name = ds_name
         X_train_array = np.asarray(X_train)

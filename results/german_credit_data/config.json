@@ -1,0 +1,51 @@
+{
+  "config": {
+    "dataset": {
+      "registered_name": "german_credit_data",
+      "test_size": 0.3,
+      "preprocessing": {
+        "scaling": "standard",
+        "encoding": "onehot"
+      }
+    },
+    "models": [
+      {
+        "name": "DecisionTree",
+        "type": "DecisionTree"
+      },
+      {
+        "name": "GradientBoosting",
+        "type": "GradientBoosting"
+      },
+      {
+        "name": "LogisticRegression",
+        "type": "LogisticRegression"
+      },
+      {
+        "name": "RandomForest",
+        "type": "RandomForest"
+      },
+      {
+        "name": "SVM",
+        "type": "SVM"
+      }
+    ],
+    "random_state": 42,
+    "experiment_id": "exp-20260604T123725Z-4f081120",
+    "run_id": "run-48478197e0"
+  },
+  "meta": {
+    "dataset": "german_credit_data",
+    "timestamp": "2026-06-04T12:37:37.629247Z",
+    "seed": 42,
+    "project_root": "C:\\Users\\mshar\\Projects\\Generalised Machine learning Benchmarks",
+    "git": {
+      "git_commit": "9368762",
+      "git_dirty": true
+    },
+    "env": {
+      "python_version": "3.11.0 (main, Oct 24 2022, 18:26:48) [MSC v.1933 64 bit (AMD64)]",
+      "platform": "Windows-10-10.0.26200-SP0"
+    }
+  }
+}

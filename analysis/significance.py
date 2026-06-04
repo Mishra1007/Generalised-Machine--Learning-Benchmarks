@@ -11,29 +11,31 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 
-from analysis.statistics import friedman_test, wilcoxon_signed_rank, rank_models
+from analysis.statistics import friedman_test, rank_models, validate_score_matrix, wilcoxon_signed_rank
 
 
-_NEMENYI_Q_ALPHA = {
-    0.10: 1.960,
-    0.05: 2.241,
-    0.01: 2.576,
-}
+def nemenyi_q_alpha(k: int, alpha: float = 0.05) -> float:
+    """Critical q for all-pairs Nemenyi after Friedman.
+
+    Demsar (2006) defines the tabulated Nemenyi critical values as upper
+    quantiles of the Studentized range distribution divided by sqrt(2).
+    """
+    if k < 2:
+        raise ValueError('Nemenyi critical values require at least two models')
+    if not 0 < alpha < 1:
+        raise ValueError('alpha must be between 0 and 1')
+    return float(stats.studentized_range.ppf(1.0 - alpha, k, np.inf) / sqrt(2.0))
 
 
 def nemenyi_critical_difference(k: int, n: int, alpha: float = 0.05) -> float:
     if k < 2 or n < 1:
         raise ValueError('Nemenyi test requires at least two models and one dataset/fold')
-    q_alpha = _NEMENYI_Q_ALPHA.get(alpha, _NEMENYI_Q_ALPHA[0.05])
+    q_alpha = nemenyi_q_alpha(k, alpha=alpha)
     return float(q_alpha * sqrt(k * (k + 1) / (6.0 * n)))
 
 
 def nemenyi_test(score_matrix: np.ndarray, model_names: Optional[Sequence[str]] = None, alpha: float = 0.05, higher_is_better: bool = True) -> Dict[str, Any]:
-    matrix = np.asarray(score_matrix, dtype=float)
-    if matrix.ndim != 2 or matrix.shape[1] < 2:
-        raise ValueError('Nemenyi test requires a 2D matrix with at least two models')
-    if model_names is not None and len(model_names) != matrix.shape[1]:
-        raise ValueError('Model names must match the number of columns in score_matrix')
+    matrix = validate_score_matrix(score_matrix, model_names, procedure='Nemenyi test')
 
     names = list(model_names) if model_names is not None else [f'model_{i}' for i in range(matrix.shape[1])]
     ranks_per_dataset = np.array([
@@ -41,20 +43,35 @@ def nemenyi_test(score_matrix: np.ndarray, model_names: Optional[Sequence[str]] 
         for row in matrix
     ], dtype=float)
     avg_ranks = ranks_per_dataset.mean(axis=0)
+    standard_error = sqrt(matrix.shape[1] * (matrix.shape[1] + 1) / (6.0 * matrix.shape[0]))
     cd = nemenyi_critical_difference(matrix.shape[1], matrix.shape[0], alpha=alpha)
 
     significance_matrix = pd.DataFrame(False, index=names, columns=names)
+    p_value_matrix = pd.DataFrame(1.0, index=names, columns=names)
     for i, j in combinations(range(len(names)), 2):
-        significant = abs(avg_ranks[i] - avg_ranks[j]) > cd
+        rank_diff = abs(avg_ranks[i] - avg_ranks[j])
+        statistic = rank_diff / standard_error * sqrt(2.0)
+        p_value = float(stats.studentized_range.sf(statistic, matrix.shape[1], np.inf))
+        significant = p_value <= alpha
         significance_matrix.iloc[i, j] = significant
         significance_matrix.iloc[j, i] = significant
+        p_value_matrix.iloc[i, j] = p_value
+        p_value_matrix.iloc[j, i] = p_value
 
     ranking = pd.DataFrame({'model': names, 'average_rank': avg_ranks}).sort_values(['average_rank', 'model']).reset_index(drop=True)
-    ranking['significant_vs_best'] = [False] + [bool(abs(ranking.loc[idx, 'average_rank'] - ranking.loc[0, 'average_rank']) > cd) for idx in range(1, len(ranking))]
+    ranking['significant_vs_best'] = [
+        False,
+        *[
+            bool(p_value_matrix.loc[ranking.loc[0, 'model'], ranking.loc[idx, 'model']] <= alpha)
+            for idx in range(1, len(ranking))
+        ],
+    ]
 
     return {
         'critical_difference': cd,
+        'q_alpha': nemenyi_q_alpha(matrix.shape[1], alpha=alpha),
         'average_ranks': dict(zip(names, map(float, avg_ranks))),
+        'p_value_matrix': p_value_matrix,
         'significance_matrix': significance_matrix,
         'ranking_table': ranking,
         'alpha': alpha,
@@ -62,11 +79,7 @@ def nemenyi_test(score_matrix: np.ndarray, model_names: Optional[Sequence[str]] 
 
 
 def pairwise_wilcoxon(score_matrix: np.ndarray, model_names: Optional[Sequence[str]] = None, alternative: str = 'two-sided') -> pd.DataFrame:
-    matrix = np.asarray(score_matrix, dtype=float)
-    if matrix.ndim != 2 or matrix.shape[1] < 2:
-        raise ValueError('Pairwise comparison requires a 2D matrix with at least two models')
-    if model_names is not None and len(model_names) != matrix.shape[1]:
-        raise ValueError('Model names must match the number of columns in score_matrix')
+    matrix = validate_score_matrix(score_matrix, model_names, procedure='Pairwise Wilcoxon comparison')
 
     names = list(model_names) if model_names is not None else [f'model_{i}' for i in range(matrix.shape[1])]
     rows = []
@@ -134,10 +147,11 @@ def holm_bonferroni(p_values: Iterable[float], alpha: float = 0.05) -> Tuple[np.
 
 
 def global_significance_analysis(score_matrix: np.ndarray, model_names: Optional[Sequence[str]] = None, higher_is_better: bool = True) -> Dict[str, Any]:
-    friedman = friedman_test(score_matrix, model_names=model_names)
-    nemenyi = nemenyi_test(score_matrix, model_names=model_names, higher_is_better=higher_is_better)
-    pairwise = pairwise_wilcoxon(score_matrix, model_names=model_names)
-    rankings = rank_models(score_matrix, model_names=model_names, higher_is_better=higher_is_better)
+    matrix = validate_score_matrix(score_matrix, model_names, procedure='Global significance analysis', min_observations=2)
+    friedman = friedman_test(matrix, model_names=model_names)
+    nemenyi = nemenyi_test(matrix, model_names=model_names, higher_is_better=higher_is_better)
+    pairwise = pairwise_wilcoxon(matrix, model_names=model_names)
+    rankings = rank_models(matrix, model_names=model_names, higher_is_better=higher_is_better)
     return {
         'friedman': friedman,
         'nemenyi': nemenyi,
