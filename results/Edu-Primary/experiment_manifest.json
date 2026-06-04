@@ -1,9 +1,9 @@
 {
-  "experiment_id": "exp-20260604T131307Z-f27406ef",
-  "run_id": "run-b9aa921b6d",
-  "timestamp": "2026-06-04T13:13:58.260025Z",
+  "experiment_id": "exp-20260604T133258Z-17443b1f",
+  "run_id": "run-994e7cf179",
+  "timestamp": "2026-06-04T13:33:31.783257Z",
   "framework_version": "phase6.1a",
-  "git_commit": "9368762",
+  "git_commit": "838884b",
   "dataset": {
     "name": "Edu-Primary",
     "source": "C:\\Users\\mshar\\Projects\\Generalised Machine learning Benchmarks\\datasets\\Edu-Primary.csv",
@@ -1730,11 +1730,11 @@
     "plots_dir": "C:\\Users\\mshar\\Projects\\Generalised Machine learning Benchmarks\\results\\Edu-Primary\\plots"
   },
   "metadata": {
-    "experiment_id": "exp-20260604T131307Z-f27406ef",
-    "run_id": "run-b9aa921b6d",
-    "timestamp": "2026-06-04T13:13:58.260025Z",
+    "experiment_id": "exp-20260604T133258Z-17443b1f",
+    "run_id": "run-994e7cf179",
+    "timestamp": "2026-06-04T13:33:31.783257Z",
     "framework_version": "phase6.1a",
-    "git_commit": "9368762",
+    "git_commit": "838884b",
     "dataset_name": "Edu-Primary",
     "dataset_source": "C:\\Users\\mshar\\Projects\\Generalised Machine learning Benchmarks\\datasets\\Edu-Primary.csv",
     "dataset_hash": "524abd618019820939ee08e3e4a279097574553aed731311c7e4602139d8eb79",
@@ -4607,8 +4607,8 @@
         }
       ],
       "random_state": 42,
-      "experiment_id": "exp-20260604T131307Z-f27406ef",
-      "run_id": "run-b9aa921b6d"
+      "experiment_id": "exp-20260604T133258Z-17443b1f",
+      "run_id": "run-994e7cf179"
     },
     "python_version": "3.11.0 (main, Oct 24 2022, 18:26:48) [MSC v.1933 64 bit (AMD64)]",
     "library_versions": {
@@ -6293,8 +6293,8 @@
         }
       ],
       "random_state": 42,
-      "experiment_id": "exp-20260604T131307Z-f27406ef",
-      "run_id": "run-b9aa921b6d"
+      "experiment_id": "exp-20260604T133258Z-17443b1f",
+      "run_id": "run-994e7cf179"
     },
     "config_checksum": null,
     "config_yaml_raw": null

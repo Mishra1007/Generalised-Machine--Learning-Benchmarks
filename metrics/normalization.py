@@ -12,6 +12,7 @@ which returns normalized scores for the metrics used in CBS.
 
 from typing import Dict, Any, List, Tuple
 import logging
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -53,13 +54,19 @@ def _invert_cv(cv: float) -> float:
 def _min_max_normalize(values: List[float]) -> List[float]:
     if not values:
         return []
-    min_v = min(values)
-    max_v = max(values)
+    # Filter out NaN values to compute min/max
+    valid_values = [v for v in values if not np.isnan(v)]
+    if not valid_values:
+        # All values are NaN; return 0.5 (neutral score) for each
+        return [0.5 for _ in values]
+    min_v = min(valid_values)
+    max_v = max(valid_values)
     if max_v == min_v:
         # All identical: return all ones to avoid unfair penalization
         return [1.0 for _ in values]
     denom = max_v - min_v
-    return [(v - min_v) / denom for v in values]
+    # Normalize, replacing NaN with 0.5 (neutral)
+    return [(v - min_v) / denom if not np.isnan(v) else 0.5 for v in values]
 
 
 def extract_metrics_for_cbs(summary: Dict[str, Any], primary_metric: str = 'f1') -> Dict[str, float]:
@@ -74,7 +81,11 @@ def extract_metrics_for_cbs(summary: Dict[str, Any], primary_metric: str = 'f1')
     overall = summary.get('overall', {}) if isinstance(summary, dict) else {}
 
     def get_overall(name):
-        return overall.get(f"{name}_mean") if overall.get(f"{name}_mean") is not None else overall.get(name)
+        val = overall.get(f"{name}_mean") if overall.get(f"{name}_mean") is not None else overall.get(name)
+        # Handle NaN values from metrics that couldn't be computed
+        if val is None or (isinstance(val, float) and np.isnan(val)):
+            return None
+        return val
 
     out['f1'] = float(get_overall('f1') or 0.0)
     out['roc_auc'] = float(get_overall('roc_auc') or 0.0)

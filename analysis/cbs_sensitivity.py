@@ -76,6 +76,10 @@ def perturb_weight_grid(
     perturbation_levels: Sequence[float] = (0.05, 0.10, 0.20),
     weights: Dict[str, float] = CBS_WEIGHTS,
 ) -> pd.DataFrame:
+    # Aggregate frame to model level (mean across folds) if it has multiple rows per model
+    if 'model' in frame.columns and len(frame) > len(frame['model'].unique()):
+        frame = frame.groupby('model')[CBS_METRICS + ['cbs']].mean().reset_index()
+    
     base_weights = normalize_weights(weights)
     baseline_scores = compute_weighted_scores(frame, base_weights)
     baseline_rank = rank_scores(baseline_scores)
@@ -137,6 +141,10 @@ def monte_carlo_weight_analysis(
     concentration: float = 20.0,
     weights: Dict[str, float] = CBS_WEIGHTS,
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    # Aggregate frame to model level (mean across folds) if it has multiple rows per model
+    if 'model' in frame.columns and len(frame) > len(frame['model'].unique()):
+        frame = frame.groupby('model')[CBS_METRICS + ['cbs']].mean().reset_index()
+    
     model_names = frame['model'] if 'model' in frame.columns else frame.index.astype(str)
     base_scores = compute_weighted_scores(frame, weights)
     base_scores.index = model_names

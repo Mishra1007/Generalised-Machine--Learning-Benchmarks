@@ -32,16 +32,16 @@
       }
     ],
     "random_state": 42,
-    "experiment_id": "exp-20260604T131307Z-f27406ef",
-    "run_id": "run-b9aa921b6d"
+    "experiment_id": "exp-20260604T133258Z-17443b1f",
+    "run_id": "run-994e7cf179"
   },
   "meta": {
     "dataset": "Edu-Primary",
-    "timestamp": "2026-06-04T13:13:59.718407Z",
+    "timestamp": "2026-06-04T13:33:32.945341Z",
     "seed": 42,
     "project_root": "C:\\Users\\mshar\\Projects\\Generalised Machine learning Benchmarks",
     "git": {
-      "git_commit": "9368762",
+      "git_commit": "838884b",
       "git_dirty": true
     },
     "env": {
