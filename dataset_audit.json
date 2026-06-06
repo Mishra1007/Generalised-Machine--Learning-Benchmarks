@@ -1,0 +1,390 @@
+{
+  "Edu-Primary": {
+    "file_size_bytes": 93220,
+    "n_samples": 649,
+    "n_features": 33,
+    "target_column": "G3",
+    "duplicate_rows": 0,
+    "near_duplicate_rows": 0,
+    "identifier_columns": [
+      {
+        "column": "paid",
+        "reason": "Name heuristic",
+        "unique_ratio": 0.0030816640986132513
+      }
+    ],
+    "high_cardinality_columns": [],
+    "grouped_entities": [
+      {
+        "column": "paid",
+        "n_groups": 2,
+        "max_repetitions": 610,
+        "avg_repetitions": 324.5
+      }
+    ],
+    "corrupted_labels": {
+      "corrupted_classes": {},
+      "class_counts": {
+        "11": 104,
+        "10": 97,
+        "13": 82,
+        "12": 72,
+        "14": 63,
+        "15": 49,
+        "16": 36,
+        "9": 35,
+        "8": 35,
+        "17": 29,
+        "18": 15,
+        "0": 15,
+        "7": 10,
+        "6": 3,
+        "19": 2,
+        "1": 1,
+        "5": 1
+      }
+    },
+    "target_leakage_columns": [],
+    "constant_features": [],
+    "near_constant_features": [],
+    "missing_value_placeholders": {},
+    "datetime_columns": [
+      "traveltime",
+      "studytime",
+      "freetime"
+    ],
+    "class_imbalance_ratio": 104.0
+  },
+  "Edu-xApi": {
+    "file_size_bytes": 38026,
+    "n_samples": 480,
+    "n_features": 17,
+    "target_column": "Class",
+    "duplicate_rows": 2,
+    "near_duplicate_rows": 0,
+    "identifier_columns": [
+      {
+        "column": "StageID",
+        "reason": "Name heuristic",
+        "unique_ratio": 0.00625
+      },
+      {
+        "column": "GradeID",
+        "reason": "Name heuristic",
+        "unique_ratio": 0.020833333333333332
+      },
+      {
+        "column": "SectionID",
+        "reason": "Name heuristic",
+        "unique_ratio": 0.00625
+      },
+      {
+        "column": "StudentAbsenceDays",
+        "reason": "Name heuristic",
+        "unique_ratio": 0.004166666666666667
+      }
+    ],
+    "high_cardinality_columns": [],
+    "grouped_entities": [
+      {
+        "column": "StageID",
+        "n_groups": 3,
+        "max_repetitions": 248,
+        "avg_repetitions": 160.0
+      },
+      {
+        "column": "GradeID",
+        "n_groups": 10,
+        "max_repetitions": 147,
+        "avg_repetitions": 48.0
+      },
+      {
+        "column": "SectionID",
+        "n_groups": 3,
+        "max_repetitions": 283,
+        "avg_repetitions": 160.0
+      }
+    ],
+    "corrupted_labels": {
+      "corrupted_classes": {},
+      "class_counts": {
+        "M": 211,
+        "H": 142,
+        "L": 127
+      }
+    },
+    "target_leakage_columns": [],
+    "constant_features": [],
+    "near_constant_features": [],
+    "missing_value_placeholders": {},
+    "datetime_columns": [],
+    "class_imbalance_ratio": 1.6614173228346456
+  },
+  "Financial": {
+    "file_size_bytes": 15366486,
+    "n_samples": 50000,
+    "n_features": 27,
+    "target_column": "Payment_Behaviour",
+    "duplicate_rows": 0,
+    "near_duplicate_rows": 0,
+    "identifier_columns": [
+      {
+        "column": "ID",
+        "reason": "Name heuristic and fully unique values",
+        "unique_ratio": 1.0
+      },
+      {
+        "column": "Customer_ID",
+        "reason": "Name heuristic",
+        "unique_ratio": 0.25
+      },
+      {
+        "column": "Name",
+        "reason": "Name heuristic",
+        "unique_ratio": 0.20278
+      },
+      {
+        "column": "SSN",
+        "reason": "Name heuristic",
+        "unique_ratio": 0.25002
+      }
+    ],
+    "high_cardinality_columns": [
+      {
+        "column": "ID",
+        "unique_values": 50000,
+        "ratio": 1.0
+      },
+      {
+        "column": "Customer_ID",
+        "unique_values": 12500,
+        "ratio": 0.25
+      },
+      {
+        "column": "Name",
+        "unique_values": 10139,
+        "ratio": 0.20278
+      },
+      {
+        "column": "Age",
+        "unique_values": 976,
+        "ratio": 0.01952
+      },
+      {
+        "column": "SSN",
+        "unique_values": 12501,
+        "ratio": 0.25002
+      },
+      {
+        "column": "Annual_Income",
+        "unique_values": 16121,
+        "ratio": 0.32242
+      },
+      {
+        "column": "Num_of_Loan",
+        "unique_values": 263,
+        "ratio": 0.00526
+      },
+      {
+        "column": "Type_of_Loan",
+        "unique_values": 6260,
+        "ratio": 0.1252
+      },
+      {
+        "column": "Num_of_Delayed_Payment",
+        "unique_values": 443,
+        "ratio": 0.00886
+      },
+      {
+        "column": "Changed_Credit_Limit",
+        "unique_values": 3927,
+        "ratio": 0.07854
+      },
+      {
+        "column": "Outstanding_Debt",
+        "unique_values": 12685,
+        "ratio": 0.2537
+      },
+      {
+        "column": "Credit_History_Age",
+        "unique_values": 399,
+        "ratio": 0.00798
+      },
+      {
+        "column": "Amount_invested_monthly",
+        "unique_values": 45450,
+        "ratio": 0.909
+      },
+      {
+        "column": "Monthly_Balance",
+        "unique_values": 49433,
+        "ratio": 0.98866
+      }
+    ],
+    "grouped_entities": [
+      {
+        "column": "Customer_ID",
+        "n_groups": 12500,
+        "max_repetitions": 4,
+        "avg_repetitions": 4.0
+      }
+    ],
+    "corrupted_labels": {
+      "corrupted_classes": {
+        "Low_spent_Small_value_payments": 12694,
+        "High_spent_Medium_value_payments": 8922,
+        "High_spent_Large_value_payments": 6844,
+        "Low_spent_Medium_value_payments": 6837,
+        "High_spent_Small_value_payments": 5651,
+        "Low_spent_Large_value_payments": 5252,
+        "!@9#%8": 3800
+      },
+      "class_counts": {
+        "Low_spent_Small_value_payments": 12694,
+        "High_spent_Medium_value_payments": 8922,
+        "High_spent_Large_value_payments": 6844,
+        "Low_spent_Medium_value_payments": 6837,
+        "High_spent_Small_value_payments": 5651,
+        "Low_spent_Large_value_payments": 5252,
+        "!@9#%8": 3800
+      }
+    },
+    "target_leakage_columns": [
+      {
+        "column": "ID",
+        "metric": "Perfect separation",
+        "value": 1.0,
+        "reason": "Feature perfectly separates target categories"
+      }
+    ],
+    "constant_features": [],
+    "near_constant_features": [],
+    "missing_value_placeholders": {
+      "Name": {
+        "nan": 5015
+      },
+      "SSN": {
+        "#F%$D@*&8": 2828
+      },
+      "Occupation": {
+        "_______": 3438
+      },
+      "Monthly_Inhand_Salary": {
+        "nan": 7498
+      },
+      "Num_Bank_Accounts": {
+        "999": 1
+      },
+      "Type_of_Loan": {
+        "nan": 5704
+      },
+      "Num_of_Delayed_Payment": {
+        "nan": 3498
+      },
+      "Changed_Credit_Limit": {
+        "_": 1059
+      },
+      "Num_Credit_Inquiries": {
+        "nan": 1035
+      },
+      "Credit_Mix": {
+        "_": 9805
+      },
+      "Credit_History_Age": {
+        "nan": 4470
+      },
+      "Amount_invested_monthly": {
+        "nan": 2271,
+        "regex(^__\\d+__$ e.g. __10000__)": 2175
+      },
+      "Monthly_Balance": {
+        "nan": 562
+      }
+    },
+    "datetime_columns": [
+      "Month",
+      "Monthly_Inhand_Salary",
+      "Delay_from_due_date",
+      "Total_EMI_per_month",
+      "Amount_invested_monthly",
+      "Monthly_Balance"
+    ],
+    "class_imbalance_ratio": 3.340526315789474
+  },
+  "german_credit_data": {
+    "file_size_bytes": 47940,
+    "n_samples": 1000,
+    "n_features": 21,
+    "target_column": "kredit",
+    "duplicate_rows": 0,
+    "near_duplicate_rows": 0,
+    "identifier_columns": [],
+    "high_cardinality_columns": [],
+    "grouped_entities": [],
+    "corrupted_labels": {
+      "corrupted_classes": {},
+      "class_counts": {
+        "1": 700,
+        "0": 300
+      }
+    },
+    "target_leakage_columns": [],
+    "constant_features": [],
+    "near_constant_features": [],
+    "missing_value_placeholders": {
+      "hoehe": {
+        "999": 1
+      }
+    },
+    "datetime_columns": [],
+    "class_imbalance_ratio": 2.3333333333333335
+  },
+  "diabetes": {
+    "file_size_bytes": 23873,
+    "n_samples": 768,
+    "n_features": 9,
+    "target_column": "Outcome",
+    "duplicate_rows": 0,
+    "near_duplicate_rows": 0,
+    "identifier_columns": [],
+    "high_cardinality_columns": [],
+    "grouped_entities": [],
+    "corrupted_labels": {
+      "corrupted_classes": {},
+      "class_counts": {
+        "0": 500,
+        "1": 268
+      }
+    },
+    "target_leakage_columns": [],
+    "constant_features": [],
+    "near_constant_features": [],
+    "missing_value_placeholders": {},
+    "datetime_columns": [],
+    "class_imbalance_ratio": 1.8656716417910448
+  },
+  "heart": {
+    "file_size_bytes": 38114,
+    "n_samples": 1025,
+    "n_features": 14,
+    "target_column": "target",
+    "duplicate_rows": 723,
+    "near_duplicate_rows": 0,
+    "identifier_columns": [],
+    "high_cardinality_columns": [],
+    "grouped_entities": [],
+    "corrupted_labels": {
+      "corrupted_classes": {},
+      "class_counts": {
+        "1": 526,
+        "0": 499
+      }
+    },
+    "target_leakage_columns": [],
+    "constant_features": [],
+    "near_constant_features": [],
+    "missing_value_placeholders": {},
+    "datetime_columns": [],
+    "class_imbalance_ratio": 1.0541082164328657
+  }
+}

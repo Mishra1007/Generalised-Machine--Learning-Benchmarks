@@ -8,6 +8,9 @@ from datasets.registry import (
     get_registry,
     DatasetRegistry,
 )
+from datasets.audit import DatasetAudit
+from datasets.identifier import IdentifierDetection
+from datasets.sanitizer import DatasetSanitizer
 
 __all__ = [
     'DatasetLoader',
@@ -17,4 +20,7 @@ __all__ = [
     'list_datasets',
     'get_registry',
     'DatasetRegistry',
+    'DatasetAudit',
+    'IdentifierDetection',
+    'DatasetSanitizer',
 ]

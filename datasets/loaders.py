@@ -65,6 +65,8 @@ class DatasetLoader:
             FileNotFoundError: If file doesn't exist
             ValueError: If target_column not found
         """
+        from datasets.sanitizer import DatasetSanitizer
+        
         filepath = Path(filepath)
         
         if not filepath.exists():
@@ -73,6 +75,18 @@ class DatasetLoader:
         # Load data
         logger.info(f"Loading dataset from {filepath}")
         df = pd.read_csv(filepath, **kwargs)
+        
+        # Apply dataset-specific remediations via DatasetSanitizer
+        sanitizer = DatasetSanitizer()
+        
+        if "Financial" in str(filepath) or target_column == "Payment_Behaviour":
+            logger.info("Applying Financial dataset remediations via DatasetSanitizer")
+            result = sanitizer.remediate_financial(df, target_col=target_column)
+            df = result["df"]
+        elif "heart" in str(filepath).lower() and target_column == "target":
+            logger.info("Applying Heart dataset remediations via DatasetSanitizer")
+            result = sanitizer.remediate_heart(df, target_col=target_column)
+            df = result["df"]
         
         # Validate target column
         if target_column not in df.columns:
