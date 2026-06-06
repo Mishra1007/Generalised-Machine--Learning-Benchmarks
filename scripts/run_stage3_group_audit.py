@@ -9,7 +9,7 @@ Audits every registered dataset for genuine group leakage risk by:
 
 Outputs:
 - group_leakage_validation.json
-- group_leakage_validation_report.md
+- project_artifacts/audits/group_leakage_validation_report.md
 """
 
 import sys
@@ -465,7 +465,7 @@ def audit_dataset(name: str, filepath: Path, target_col: str) -> dict:
 
 
 def generate_markdown_report(all_results: dict) -> str:
-    """Generate the group_leakage_validation_report.md content."""
+    """Generate the project_artifacts/audits/group_leakage_validation_report.md content."""
     md = []
     md.append("# Group Leakage Validation Report — Stage 3\n")
     md.append("This report provides an evidence-driven assessment of whether any dataset ")
@@ -610,14 +610,14 @@ def main():
         all_results[name] = result
 
     # Save JSON
-    json_path = PROJECT_ROOT / "group_leakage_validation.json"
+    json_path = PROJECT_ROOT / "project_artifacts/audits/group_leakage_validation.json"
     with open(json_path, "w", encoding="utf8") as f:
         json.dump(all_results, f, indent=2, default=str)
     logger.info(f"Saved {json_path}")
 
     # Save Markdown report
     report = generate_markdown_report(all_results)
-    report_path = PROJECT_ROOT / "group_leakage_validation_report.md"
+    report_path = PROJECT_ROOT / "project_artifacts/audits/project_artifacts/audits/group_leakage_validation_report.md"
     with open(report_path, "w", encoding="utf8") as f:
         f.write(report)
     logger.info(f"Saved {report_path}")

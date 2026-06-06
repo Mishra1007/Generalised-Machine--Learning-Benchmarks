@@ -243,7 +243,7 @@ def run_audit():
         }
 
     # Save dataset_audit.json
-    with open(PROJECT_ROOT / "dataset_audit.json", "w", encoding="utf8") as f:
+    with open(PROJECT_ROOT / "project_artifacts/audits/dataset_audit.json", "w", encoding="utf8") as f:
         json.dump(audit_results, f, indent=2)
     logger.info("Saved dataset_audit.json")
 
@@ -338,7 +338,7 @@ def run_audit():
                 
         md_content.append("\n" + "---" + "\n")
 
-    with open(PROJECT_ROOT / "dataset_audit_report.md", "w", encoding="utf8") as f:
+    with open(PROJECT_ROOT / "project_artifacts/audits/dataset_audit_report.md", "w", encoding="utf8") as f:
         f.write("\n".join(md_content))
     logger.info("Saved dataset_audit_report.md")
 

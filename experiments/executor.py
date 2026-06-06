@@ -7,6 +7,8 @@ from typing import Dict, Any, Optional
 import logging
 import uuid
 import time
+import os
+import json
 from copy import deepcopy
 from pathlib import Path
 
@@ -37,6 +39,99 @@ def _json_safe(value):
     if isinstance(value, (list, tuple)):
         return [_json_safe(item) for item in value]
     return value
+
+
+def _serialize_fold_result(fr) -> dict:
+    return {
+        'repetition_id': fr.repetition_id,
+        'fold_id': fr.fold_id,
+        'model_name': fr.model_name,
+        'dataset_name': fr.dataset_name,
+        'metrics': fr.metrics,
+        'train_size': fr.train_size,
+        'test_size': fr.test_size,
+        'train_time': fr.train_time,
+        'eval_time': fr.eval_time,
+        'timestamp': fr.timestamp,
+        'y_test': fr.y_test.tolist() if fr.y_test is not None else None,
+        'y_pred': fr.y_pred.tolist() if fr.y_pred is not None else None,
+        'y_pred_proba': fr.y_pred_proba.tolist() if fr.y_pred_proba is not None else None,
+        'test_indices': fr.test_indices,
+    }
+
+
+def _deserialize_fold_result(d: dict):
+    from validation.results import FoldResult
+    return FoldResult(
+        repetition_id=d['repetition_id'],
+        fold_id=d['fold_id'],
+        model_name=d['model_name'],
+        dataset_name=d['dataset_name'],
+        metrics=d['metrics'],
+        train_size=d['train_size'],
+        test_size=d['test_size'],
+        train_time=d['train_time'],
+        eval_time=d['eval_time'],
+        timestamp=d['timestamp'],
+        y_test=np.array(d['y_test']) if d.get('y_test') is not None else None,
+        y_pred=np.array(d['y_pred']) if d.get('y_pred') is not None else None,
+        y_pred_proba=np.array(d['y_pred_proba']) if d.get('y_pred_proba') is not None else None,
+        test_indices=d.get('test_indices'),
+    )
+
+
+def _serialize_validation_results(vr) -> dict:
+    if vr is None:
+        return None
+    return {
+        'model_name': vr.model_name,
+        'dataset_name': vr.dataset_name,
+        'random_state': vr.random_state,
+        'fold_results': [_serialize_fold_result(fr) for fr in vr.fold_results],
+    }
+
+
+def _deserialize_validation_results(d: dict):
+    if d is None:
+        return None
+    from validation.results import ValidationResults
+    vr = ValidationResults(
+        model_name=d['model_name'],
+        dataset_name=d['dataset_name'],
+        random_state=d['random_state']
+    )
+    for fr_dict in d['fold_results']:
+        vr.add_fold_result(_deserialize_fold_result(fr_dict))
+    return vr
+
+
+def _atomic_checkpoint_dump(path: str, data: dict) -> None:
+    import tempfile
+    import json
+    import time
+    target = Path(path)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp_name = tempfile.mkstemp(prefix=target.name + '.', suffix='.tmp', dir=str(target.parent))
+    try:
+        with os.fdopen(fd, 'w', encoding='utf8') as fh:
+            json.dump(data, fh, indent=2)
+            fh.flush()
+            os.fsync(fh.fileno())
+        
+        for i in range(5):
+            try:
+                os.replace(tmp_name, target)
+                break
+            except PermissionError:
+                if i == 4:
+                    raise
+                time.sleep(0.05)
+    except Exception:
+        try:
+            os.unlink(tmp_name)
+        except Exception:
+            pass
+        raise
 
 
 class ExperimentExecutor:
@@ -131,8 +226,61 @@ class ExperimentExecutor:
             except Exception:
                 folds_info = []
 
+        import json
+        import os
+        checkpoint_path = os.path.join(out_root, dataset_name, 'checkpoint.json')
+        completed_models = {}
+        in_progress_model = None
+        in_progress_folds = []
+
+        if os.path.exists(checkpoint_path):
+            try:
+                with open(checkpoint_path, 'r', encoding='utf8') as fh:
+                    cp_data = json.load(fh)
+                experiment_id = cp_data.get('experiment_id', experiment_id)
+                run_id = cp_data.get('run_id', run_id)
+                config['experiment_id'] = experiment_id
+                config['run_id'] = run_id
+                
+                for m_name, vr_dict in cp_data.get('completed_models', {}).items():
+                    completed_models[m_name] = _deserialize_validation_results(vr_dict)
+                
+                in_progress_model = cp_data.get('in_progress_model')
+                in_progress_folds = cp_data.get('in_progress_folds', [])
+                logger.info(f"Checkpoint loaded. Restored {len(completed_models)} models from {checkpoint_path}")
+            except Exception as e:
+                logger.warning(f"Failed to load checkpoint: {e}. Starting experiment from scratch.")
+
         results_map = {}
         for model_name, model in models_map.items():
+            if model_name in completed_models:
+                logger.info(f"Model {model_name} restored from checkpoint.")
+                results_map[model_name] = completed_models[model_name]
+                continue
+
+            from validation.results import ValidationResults
+            vr = None
+            if model_name == in_progress_model and in_progress_folds:
+                logger.info(f"Model {model_name} resuming from fold-level checkpoint.")
+                vr = ValidationResults(model_name=model_name, dataset_name=dataset_name, random_state=seed)
+                for f_dict in in_progress_folds:
+                    vr.add_fold_result(_deserialize_fold_result(f_dict))
+
+            def make_on_fold_complete(m_name, vr_obj):
+                def on_fold_complete(fr):
+                    checkpoint_data = {
+                        'experiment_id': experiment_id,
+                        'run_id': run_id,
+                        'completed_models': {name: _serialize_validation_results(res) for name, res in results_map.items() if res is not None},
+                        'in_progress_model': m_name,
+                        'in_progress_folds': [_serialize_fold_result(fold) for fold in vr_obj.fold_results]
+                    }
+                    _atomic_checkpoint_dump(checkpoint_path, checkpoint_data)
+                return on_fold_complete
+
+            if vr is None:
+                vr = ValidationResults(model_name=model_name, dataset_name=dataset_name, random_state=seed)
+
             try:
                 results_map[model_name] = self.validator.validate(
                     X_train_array,
@@ -142,8 +290,21 @@ class ExperimentExecutor:
                     dataset_name=dataset_name,
                     predict_proba=True,
                     return_predictions=save_predictions,
+                    on_fold_complete=make_on_fold_complete(model_name, vr),
+                    results=vr
                 )
-            except Exception:
+                
+                # Checkpoint completed model
+                checkpoint_data = {
+                    'experiment_id': experiment_id,
+                    'run_id': run_id,
+                    'completed_models': {name: _serialize_validation_results(res) for name, res in results_map.items() if res is not None},
+                    'in_progress_model': None,
+                    'in_progress_folds': []
+                }
+                _atomic_checkpoint_dump(checkpoint_path, checkpoint_data)
+            except Exception as exc:
+                logger.error(f"Execution failed for model {model_name}: {exc}")
                 results_map[model_name] = None
 
         model_summaries = {}
@@ -234,6 +395,14 @@ class ExperimentExecutor:
             metadata=exp_meta.to_dict(),
             validation_results=results_map if save_predictions else None,
         )
+
+        # Cleanup checkpoint file upon successful completion
+        if os.path.exists(checkpoint_path):
+            try:
+                os.remove(checkpoint_path)
+                logger.info(f"Successfully cleaned up checkpoint at {checkpoint_path}")
+            except Exception as e:
+                logger.warning(f"Failed to clean up checkpoint at {checkpoint_path}: {e}")
 
         return {
             'experiment_id': experiment_id,

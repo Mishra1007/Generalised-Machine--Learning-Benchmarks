@@ -7,7 +7,6 @@ from datasets import DatasetAudit, DatasetSanitizer, IdentifierDetection
 def test_identifier_detection():
     detector = IdentifierDetection()
 
-    # Create dummy dataframe
     df = pd.DataFrame({
         "id_col": [1, 2, 3, 4],
         "SSN_col": ["a", "b", "c", "d"],

@@ -92,7 +92,7 @@ def generate_financial_report():
     md.append("The logic is implemented in `DatasetSanitizer.remediate_financial()` and invoked by `DatasetLoader.load_csv()`.")
     md.append("")
 
-    report_path = PROJECT_ROOT / "financial_remediation_report.md"
+    report_path = PROJECT_ROOT / "project_artifacts/remediation/financial_remediation_report.md"
     report_path.write_text("\n".join(md), encoding="utf8")
     logger.info(f"Saved {report_path}")
 
@@ -149,7 +149,7 @@ def generate_heart_report():
 
     md.append("## Cross-Validation Leakage Impact\n")
     md.append("Prior to deduplication, a standard 5-fold CV on the duplicated dataset showed **~97.56% fold contamination** ")
-    md.append("(see `duplicate_audit_report.md`). After deduplication, each fold will contain genuinely unseen samples, ")
+    md.append("(see `project_artifacts/audits/duplicate_audit_report.md`). After deduplication, each fold will contain genuinely unseen samples, ")
     md.append("producing valid generalization estimates.\n")
 
     md.append("## Integration\n")
@@ -160,7 +160,7 @@ def generate_heart_report():
     md.append("The logic is implemented in `DatasetSanitizer.remediate_heart()` and invoked by `DatasetLoader.load_csv()`.")
     md.append("")
 
-    report_path = PROJECT_ROOT / "heart_remediation_report.md"
+    report_path = PROJECT_ROOT / "project_artifacts/remediation/heart_remediation_report.md"
     report_path.write_text("\n".join(md), encoding="utf8")
     logger.info(f"Saved {report_path}")
 

@@ -123,11 +123,11 @@ def main():
     df_manifest = pd.DataFrame(datasets_info)
     cols_to_drop = ['Raw Score']
     df_manifest_out = df_manifest.drop(columns=cols_to_drop)
-    csv_path = PROJECT_ROOT / 'benchmark_revalidation_manifest.csv'
+    csv_path = PROJECT_ROOT / 'project_artifacts/audits/benchmark_revalidation_manifest.csv'
     df_manifest_out.to_csv(csv_path, index=False)
     
     # Save MD
-    md_path = PROJECT_ROOT / 'benchmark_revalidation_manifest.md'
+    md_path = PROJECT_ROOT / 'project_artifacts/audits/benchmark_revalidation_manifest.md'
     with open(md_path, 'w', encoding='utf-8') as f:
         f.write("# Benchmark Revalidation Manifest\n\n")
         

@@ -64,7 +64,7 @@ def main():
 
     # 2. Generate and save dataset_audit_report.md
     report_md = audit.generate_markdown_report(audit_results)
-    report_path = PROJECT_ROOT / "dataset_audit_report.md"
+    report_path = PROJECT_ROOT / "project_artifacts/audits/dataset_audit_report.md"
     with open(report_path, "w", encoding="utf8") as f:
         f.write(report_md)
     logger.info(f"Saved audit Markdown report to {report_path}")
@@ -72,7 +72,7 @@ def main():
     # 3. Generate and save identifier_report.md
     detector = IdentifierDetection()
     id_report_md = detector.generate_identifier_report(audit_results)
-    id_report_path = PROJECT_ROOT / "identifier_report.md"
+    id_report_path = PROJECT_ROOT / "project_artifacts/audits/identifier_report.md"
     with open(id_report_path, "w", encoding="utf8") as f:
         f.write(id_report_md)
     logger.info(f"Saved identifier report to {id_report_path}")

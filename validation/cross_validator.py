@@ -75,6 +75,8 @@ class CrossValidator:
         dataset_name: str,
         predict_proba: bool = True,
         return_predictions: bool = False,
+        on_fold_complete: Optional[Callable[[FoldResult], None]] = None,
+        results: Optional[ValidationResults] = None,
     ) -> ValidationResults:
         """
         Perform cross-validation on a model.
@@ -89,6 +91,7 @@ class CrossValidator:
             dataset_name: Name of dataset for logging
             predict_proba: Whether to collect prediction probabilities
             return_predictions: Whether to store predictions in results
+            results: Existing ValidationResults instance to continue from
         
         Returns:
             ValidationResults object with all fold metrics
@@ -113,11 +116,12 @@ class CrossValidator:
             f"{'=' * 60}\n"
         )
         
-        results = ValidationResults(
-            model_name=model_name,
-            dataset_name=dataset_name,
-            random_state=self.random_state
-        )
+        if results is None:
+            results = ValidationResults(
+                model_name=model_name,
+                dataset_name=dataset_name,
+                random_state=self.random_state
+            )
         
         # Track overall timing
         cv_start_time = time.time()
@@ -135,6 +139,23 @@ class CrossValidator:
         
         for rep_id, fold_id, train_idx, test_idx in self.fold_manager.generate_folds(X, y):
             fold_count += 1
+            
+            # Check if fold already exists in results (restored from checkpoint)
+            existing_fold = None
+            if results.fold_results:
+                for fr in results.fold_results:
+                    if fr.repetition_id == rep_id and fr.fold_id == fold_id:
+                        existing_fold = fr
+                        break
+            
+            if existing_fold is not None:
+                logger.info(
+                    f"\n[{fold_count}/{total_folds}] Rep {rep_id}, Fold {fold_id}: "
+                    f"Restoring from checkpoint (Skipping training/prediction)"
+                )
+                if on_fold_complete is not None:
+                    on_fold_complete(existing_fold)
+                continue
             
             # Split data
             X_train, X_test = X[train_idx], X[test_idx]
@@ -207,6 +228,8 @@ class CrossValidator:
             )
             
             results.add_fold_result(fold_result)
+            if on_fold_complete is not None:
+                on_fold_complete(fold_result)
         
         cv_total_time = time.time() - cv_start_time
         
