@@ -22,7 +22,11 @@ def test_executor_writes_metadata_and_predictions(tmp_path):
     data_dir = tmp_path / 'data'
     data_dir.mkdir()
     csv = data_dir / 'sm.csv'
-    csv.write_text('feat1,feat2,target\n0.1,1,0\n0.2,2,1\n0.3,1,0\n0.4,2,1\n')
+    rows = ['feat1,feat2,target']
+    for i in range(10):
+        rows.append('0.1,1,0')
+        rows.append('0.2,2,1')
+    csv.write_text('\n'.join(rows) + '\n')
 
     # Register dataset
     register_dataset('meta_demo', str(csv), target_column='target')

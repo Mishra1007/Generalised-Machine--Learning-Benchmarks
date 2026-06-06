@@ -1,6 +1,6 @@
 # CBS Validation Report
 
-Dataset artifact: `C:\Users\mshar\Projects\Generalised Machine learning Benchmarks\results\Edu-Primary`
+Dataset artifact: `results/Edu-Primary`
 
 ## Methodology
 
@@ -61,9 +61,9 @@ Most frequent top model under sampled valid weights: `DecisionTree` (81.60%).
 
 ## Visualizations
 
-- sensitivity_plot: `C:\Users\mshar\Projects\Generalised Machine learning Benchmarks\results\Edu-Primary\cbs_validation\plots\tornado_plot.png`
-- weight_impact_plot: `C:\Users\mshar\Projects\Generalised Machine learning Benchmarks\results\Edu-Primary\cbs_validation\plots\weight_sensitivity_plot.png`
-- ranking_stability_plot: `C:\Users\mshar\Projects\Generalised Machine learning Benchmarks\results\Edu-Primary\cbs_validation\plots\ranking_stability_plot.png`
-- metric_contribution_plot: `C:\Users\mshar\Projects\Generalised Machine learning Benchmarks\results\Edu-Primary\cbs_validation\plots\metric_contribution_plot.png`
-- correlation_heatmap: `C:\Users\mshar\Projects\Generalised Machine learning Benchmarks\results\Edu-Primary\cbs_validation\plots\correlation_heatmap.png`
-- stability_distribution: `C:\Users\mshar\Projects\Generalised Machine learning Benchmarks\results\Edu-Primary\cbs_validation\plots\stability_distribution.png`
+- sensitivity_plot: `results\Edu-Primary\cbs_validation\plots\tornado_plot.png`
+- weight_impact_plot: `results\Edu-Primary\cbs_validation\plots\weight_sensitivity_plot.png`
+- ranking_stability_plot: `results\Edu-Primary\cbs_validation\plots\ranking_stability_plot.png`
+- metric_contribution_plot: `results\Edu-Primary\cbs_validation\plots\metric_contribution_plot.png`
+- correlation_heatmap: `results\Edu-Primary\cbs_validation\plots\correlation_heatmap.png`
+- stability_distribution: `results\Edu-Primary\cbs_validation\plots\stability_distribution.png`

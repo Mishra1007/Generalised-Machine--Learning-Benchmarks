@@ -1,0 +1,499 @@
+{
+  "Edu-Primary": {
+    "dataset": "Edu-Primary",
+    "filepath": "C:\\Users\\mshar\\Projects\\Generalised Machine learning Benchmarks\\datasets\\Edu-Primary.csv",
+    "target_column": "G3",
+    "n_samples": 649,
+    "n_features": 33,
+    "candidate_columns": [
+      {
+        "column": "paid",
+        "candidate_source": "name_heuristic",
+        "statistics": {
+          "column": "paid",
+          "total_unique_groups": 2,
+          "total_observations": 649,
+          "mean_obs_per_group": 324.5,
+          "median_obs_per_group": 324.5,
+          "max_obs_per_group": 610,
+          "min_obs_per_group": 39,
+          "std_obs_per_group": 403.75797205751866,
+          "n_repeated_groups": 2,
+          "pct_repeated_groups": 100.0,
+          "samples_in_repeated_groups": 649,
+          "pct_samples_in_repeated_groups": 100.0
+        },
+        "leakage_simulation": {
+          "train_test_split": {
+            "error": "The least populated class in y has only 1 member, which is too few. The minimum number of groups for any class cannot be less than 2."
+          },
+          "cv_fold_overlap": {
+            "n_splits": 5,
+            "per_fold": [
+              {
+                "fold": 1,
+                "overlapping_groups": 2,
+                "pct_test_groups_overlapping": 100.0,
+                "test_samples_leaked": 130,
+                "pct_test_samples_leaked": 100.0
+              },
+              {
+                "fold": 2,
+                "overlapping_groups": 2,
+                "pct_test_groups_overlapping": 100.0,
+                "test_samples_leaked": 130,
+                "pct_test_samples_leaked": 100.0
+              },
+              {
+                "fold": 3,
+                "overlapping_groups": 2,
+                "pct_test_groups_overlapping": 100.0,
+                "test_samples_leaked": 130,
+                "pct_test_samples_leaked": 100.0
+              },
+              {
+                "fold": 4,
+                "overlapping_groups": 2,
+                "pct_test_groups_overlapping": 100.0,
+                "test_samples_leaked": 130,
+                "pct_test_samples_leaked": 100.0
+              },
+              {
+                "fold": 5,
+                "overlapping_groups": 2,
+                "pct_test_groups_overlapping": 100.0,
+                "test_samples_leaked": 129,
+                "pct_test_samples_leaked": 100.0
+              }
+            ],
+            "mean_pct_test_samples_leaked": 100.0
+          }
+        },
+        "classification": {
+          "recommendation": "Safe for current StratifiedKFold",
+          "confidence": "HIGH",
+          "is_false_positive": true,
+          "false_positive_reason": "Column 'paid' has only 2 unique values across 649 rows (unique ratio: 0.0031). This is a categorical feature, not an entity identifier. High group overlap in CV is expected and harmless \u2014 it simply means the same category value appears in both train and test, which is normal for categorical features.",
+          "evidence": {
+            "unique_values": 2,
+            "unique_ratio": 0.0030816640986132513,
+            "is_categorical_feature": true,
+            "train_test_overlap_pct": 0.0,
+            "cv_mean_overlap_pct": 100.0
+          },
+          "expected_impact_on_benchmarks": "None. Current benchmark results remain valid.",
+          "prior_results_invalid": false
+        }
+      }
+    ],
+    "overall_recommendation": "Safe for current StratifiedKFold",
+    "overall_confidence": "HIGH",
+    "prior_results_invalid": false
+  },
+  "Edu-xApi": {
+    "dataset": "Edu-xApi",
+    "filepath": "C:\\Users\\mshar\\Projects\\Generalised Machine learning Benchmarks\\datasets\\Edu-xApi.csv",
+    "target_column": "Class",
+    "n_samples": 480,
+    "n_features": 17,
+    "candidate_columns": [
+      {
+        "column": "StageID",
+        "candidate_source": "name_heuristic",
+        "statistics": {
+          "column": "StageID",
+          "total_unique_groups": 3,
+          "total_observations": 480,
+          "mean_obs_per_group": 160.0,
+          "median_obs_per_group": 199.0,
+          "max_obs_per_group": 248,
+          "min_obs_per_group": 33,
+          "std_obs_per_group": 112.6809655620682,
+          "n_repeated_groups": 3,
+          "pct_repeated_groups": 100.0,
+          "samples_in_repeated_groups": 480,
+          "pct_samples_in_repeated_groups": 100.0
+        },
+        "leakage_simulation": {
+          "train_test_split": {
+            "train_size": 336,
+            "test_size": 144,
+            "unique_groups_in_train": 3,
+            "unique_groups_in_test": 3,
+            "overlapping_groups": 3,
+            "pct_test_groups_overlapping": 100.0,
+            "test_samples_with_group_in_train": 144,
+            "pct_test_samples_leaked": 100.0
+          },
+          "cv_fold_overlap": {
+            "n_splits": 5,
+            "per_fold": [
+              {
+                "fold": 1,
+                "overlapping_groups": 3,
+                "pct_test_groups_overlapping": 100.0,
+                "test_samples_leaked": 96,
+                "pct_test_samples_leaked": 100.0
+              },
+              {
+                "fold": 2,
+                "overlapping_groups": 3,
+                "pct_test_groups_overlapping": 100.0,
+                "test_samples_leaked": 96,
+                "pct_test_samples_leaked": 100.0
+              },
+              {
+                "fold": 3,
+                "overlapping_groups": 3,
+                "pct_test_groups_overlapping": 100.0,
+                "test_samples_leaked": 96,
+                "pct_test_samples_leaked": 100.0
+              },
+              {
+                "fold": 4,
+                "overlapping_groups": 3,
+                "pct_test_groups_overlapping": 100.0,
+                "test_samples_leaked": 96,
+                "pct_test_samples_leaked": 100.0
+              },
+              {
+                "fold": 5,
+                "overlapping_groups": 3,
+                "pct_test_groups_overlapping": 100.0,
+                "test_samples_leaked": 96,
+                "pct_test_samples_leaked": 100.0
+              }
+            ],
+            "mean_pct_test_samples_leaked": 100.0
+          }
+        },
+        "classification": {
+          "recommendation": "Safe for current StratifiedKFold",
+          "confidence": "HIGH",
+          "is_false_positive": true,
+          "false_positive_reason": "Column 'StageID' has only 3 unique values across 480 rows (unique ratio: 0.0063). This is a categorical feature, not an entity identifier. High group overlap in CV is expected and harmless \u2014 it simply means the same category value appears in both train and test, which is normal for categorical features.",
+          "evidence": {
+            "unique_values": 3,
+            "unique_ratio": 0.00625,
+            "is_categorical_feature": true,
+            "train_test_overlap_pct": 100.0,
+            "cv_mean_overlap_pct": 100.0
+          },
+          "expected_impact_on_benchmarks": "None. Current benchmark results remain valid.",
+          "prior_results_invalid": false
+        }
+      },
+      {
+        "column": "GradeID",
+        "candidate_source": "name_heuristic",
+        "statistics": {
+          "column": "GradeID",
+          "total_unique_groups": 10,
+          "total_observations": 480,
+          "mean_obs_per_group": 48.0,
+          "median_obs_per_group": 22.5,
+          "max_obs_per_group": 147,
+          "min_obs_per_group": 3,
+          "std_obs_per_group": 53.638709073868576,
+          "n_repeated_groups": 10,
+          "pct_repeated_groups": 100.0,
+          "samples_in_repeated_groups": 480,
+          "pct_samples_in_repeated_groups": 100.0
+        },
+        "leakage_simulation": {
+          "train_test_split": {
+            "train_size": 336,
+            "test_size": 144,
+            "unique_groups_in_train": 10,
+            "unique_groups_in_test": 9,
+            "overlapping_groups": 9,
+            "pct_test_groups_overlapping": 100.0,
+            "test_samples_with_group_in_train": 144,
+            "pct_test_samples_leaked": 100.0
+          },
+          "cv_fold_overlap": {
+            "n_splits": 5,
+            "per_fold": [
+              {
+                "fold": 1,
+                "overlapping_groups": 9,
+                "pct_test_groups_overlapping": 100.0,
+                "test_samples_leaked": 96,
+                "pct_test_samples_leaked": 100.0
+              },
+              {
+                "fold": 2,
+                "overlapping_groups": 8,
+                "pct_test_groups_overlapping": 100.0,
+                "test_samples_leaked": 96,
+                "pct_test_samples_leaked": 100.0
+              },
+              {
+                "fold": 3,
+                "overlapping_groups": 8,
+                "pct_test_groups_overlapping": 100.0,
+                "test_samples_leaked": 96,
+                "pct_test_samples_leaked": 100.0
+              },
+              {
+                "fold": 4,
+                "overlapping_groups": 9,
+                "pct_test_groups_overlapping": 100.0,
+                "test_samples_leaked": 96,
+                "pct_test_samples_leaked": 100.0
+              },
+              {
+                "fold": 5,
+                "overlapping_groups": 7,
+                "pct_test_groups_overlapping": 100.0,
+                "test_samples_leaked": 96,
+                "pct_test_samples_leaked": 100.0
+              }
+            ],
+            "mean_pct_test_samples_leaked": 100.0
+          }
+        },
+        "classification": {
+          "recommendation": "Safe for current StratifiedKFold",
+          "confidence": "HIGH",
+          "is_false_positive": true,
+          "false_positive_reason": "Column 'GradeID' has only 10 unique values across 480 rows (unique ratio: 0.0208). This is a categorical feature, not an entity identifier. High group overlap in CV is expected and harmless \u2014 it simply means the same category value appears in both train and test, which is normal for categorical features.",
+          "evidence": {
+            "unique_values": 10,
+            "unique_ratio": 0.020833333333333332,
+            "is_categorical_feature": true,
+            "train_test_overlap_pct": 100.0,
+            "cv_mean_overlap_pct": 100.0
+          },
+          "expected_impact_on_benchmarks": "None. Current benchmark results remain valid.",
+          "prior_results_invalid": false
+        }
+      },
+      {
+        "column": "SectionID",
+        "candidate_source": "name_heuristic",
+        "statistics": {
+          "column": "SectionID",
+          "total_unique_groups": 3,
+          "total_observations": 480,
+          "mean_obs_per_group": 160.0,
+          "median_obs_per_group": 167.0,
+          "max_obs_per_group": 283,
+          "min_obs_per_group": 30,
+          "std_obs_per_group": 126.64517361510465,
+          "n_repeated_groups": 3,
+          "pct_repeated_groups": 100.0,
+          "samples_in_repeated_groups": 480,
+          "pct_samples_in_repeated_groups": 100.0
+        },
+        "leakage_simulation": {
+          "train_test_split": {
+            "train_size": 336,
+            "test_size": 144,
+            "unique_groups_in_train": 3,
+            "unique_groups_in_test": 3,
+            "overlapping_groups": 3,
+            "pct_test_groups_overlapping": 100.0,
+            "test_samples_with_group_in_train": 144,
+            "pct_test_samples_leaked": 100.0
+          },
+          "cv_fold_overlap": {
+            "n_splits": 5,
+            "per_fold": [
+              {
+                "fold": 1,
+                "overlapping_groups": 3,
+                "pct_test_groups_overlapping": 100.0,
+                "test_samples_leaked": 96,
+                "pct_test_samples_leaked": 100.0
+              },
+              {
+                "fold": 2,
+                "overlapping_groups": 3,
+                "pct_test_groups_overlapping": 100.0,
+                "test_samples_leaked": 96,
+                "pct_test_samples_leaked": 100.0
+              },
+              {
+                "fold": 3,
+                "overlapping_groups": 3,
+                "pct_test_groups_overlapping": 100.0,
+                "test_samples_leaked": 96,
+                "pct_test_samples_leaked": 100.0
+              },
+              {
+                "fold": 4,
+                "overlapping_groups": 3,
+                "pct_test_groups_overlapping": 100.0,
+                "test_samples_leaked": 96,
+                "pct_test_samples_leaked": 100.0
+              },
+              {
+                "fold": 5,
+                "overlapping_groups": 3,
+                "pct_test_groups_overlapping": 100.0,
+                "test_samples_leaked": 96,
+                "pct_test_samples_leaked": 100.0
+              }
+            ],
+            "mean_pct_test_samples_leaked": 100.0
+          }
+        },
+        "classification": {
+          "recommendation": "Safe for current StratifiedKFold",
+          "confidence": "HIGH",
+          "is_false_positive": true,
+          "false_positive_reason": "Column 'SectionID' has only 3 unique values across 480 rows (unique ratio: 0.0063). This is a categorical feature, not an entity identifier. High group overlap in CV is expected and harmless \u2014 it simply means the same category value appears in both train and test, which is normal for categorical features.",
+          "evidence": {
+            "unique_values": 3,
+            "unique_ratio": 0.00625,
+            "is_categorical_feature": true,
+            "train_test_overlap_pct": 100.0,
+            "cv_mean_overlap_pct": 100.0
+          },
+          "expected_impact_on_benchmarks": "None. Current benchmark results remain valid.",
+          "prior_results_invalid": false
+        }
+      }
+    ],
+    "overall_recommendation": "Safe for current StratifiedKFold",
+    "overall_confidence": "HIGH",
+    "prior_results_invalid": false
+  },
+  "Financial": {
+    "dataset": "Financial",
+    "filepath": "C:\\Users\\mshar\\Projects\\Generalised Machine learning Benchmarks\\datasets\\Financial.csv",
+    "target_column": "Payment_Behaviour",
+    "n_samples": 50000,
+    "n_features": 27,
+    "candidate_columns": [
+      {
+        "column": "Customer_ID",
+        "candidate_source": "name_heuristic",
+        "statistics": {
+          "column": "Customer_ID",
+          "total_unique_groups": 12500,
+          "total_observations": 50000,
+          "mean_obs_per_group": 4.0,
+          "median_obs_per_group": 4.0,
+          "max_obs_per_group": 4,
+          "min_obs_per_group": 4,
+          "std_obs_per_group": 0.0,
+          "n_repeated_groups": 12500,
+          "pct_repeated_groups": 100.0,
+          "samples_in_repeated_groups": 50000,
+          "pct_samples_in_repeated_groups": 100.0
+        },
+        "leakage_simulation": {
+          "train_test_split": {
+            "train_size": 35000,
+            "test_size": 15000,
+            "unique_groups_in_train": 12384,
+            "unique_groups_in_test": 9499,
+            "overlapping_groups": 9383,
+            "pct_test_groups_overlapping": 98.778818823034,
+            "test_samples_with_group_in_train": 14536,
+            "pct_test_samples_leaked": 96.90666666666667
+          },
+          "cv_fold_overlap": {
+            "n_splits": 5,
+            "per_fold": [
+              {
+                "fold": 1,
+                "overlapping_groups": 7385,
+                "pct_test_groups_overlapping": 99.70298366410152,
+                "test_samples_leaked": 9912,
+                "pct_test_samples_leaked": 99.11999999999999
+              },
+              {
+                "fold": 2,
+                "overlapping_groups": 7344,
+                "pct_test_groups_overlapping": 99.74195300828467,
+                "test_samples_leaked": 9924,
+                "pct_test_samples_leaked": 99.24
+              },
+              {
+                "fold": 3,
+                "overlapping_groups": 7385,
+                "pct_test_groups_overlapping": 99.78381299824348,
+                "test_samples_leaked": 9936,
+                "pct_test_samples_leaked": 99.36
+              },
+              {
+                "fold": 4,
+                "overlapping_groups": 7370,
+                "pct_test_groups_overlapping": 99.56768440961902,
+                "test_samples_leaked": 9872,
+                "pct_test_samples_leaked": 98.72
+              },
+              {
+                "fold": 5,
+                "overlapping_groups": 7353,
+                "pct_test_groups_overlapping": 99.72873999728739,
+                "test_samples_leaked": 9920,
+                "pct_test_samples_leaked": 99.2
+              }
+            ],
+            "mean_pct_test_samples_leaked": 99.12799999999999
+          }
+        },
+        "classification": {
+          "recommendation": "StratifiedGroupKFold recommended",
+          "confidence": "HIGH",
+          "is_false_positive": false,
+          "evidence": {
+            "unique_groups": 12500,
+            "unique_ratio": 0.25,
+            "mean_obs_per_group": 4.0,
+            "pct_samples_in_repeated_groups": 100.0,
+            "train_test_overlap_pct": 96.90666666666667,
+            "cv_mean_overlap_pct": 99.12799999999999
+          },
+          "expected_impact_on_benchmarks": "Cross-validation scores may be inflated because 99.1% of test samples have their entity group present in training. Models may memorize group-level patterns instead of learning generalizable features.",
+          "prior_results_invalid": false,
+          "already_remediated": true,
+          "remediation_note": "Customer_ID is already dropped during Stage 2 remediation (DatasetSanitizer.remediate_financial). This column never enters the training pipeline, so there is no group leakage in current benchmarks."
+        }
+      }
+    ],
+    "overall_recommendation": "Safe for current StratifiedKFold",
+    "overall_confidence": "HIGH",
+    "prior_results_invalid": false
+  },
+  "german_credit_data": {
+    "dataset": "german_credit_data",
+    "filepath": "C:\\Users\\mshar\\Projects\\Generalised Machine learning Benchmarks\\datasets\\german_credit_data.csv",
+    "target_column": "kredit",
+    "n_samples": 1000,
+    "n_features": 21,
+    "candidate_columns": [],
+    "overall_recommendation": "Safe for current StratifiedKFold",
+    "overall_confidence": "HIGH",
+    "overall_evidence": "No candidate grouping columns found in data.",
+    "prior_results_invalid": false
+  },
+  "diabetes": {
+    "dataset": "diabetes",
+    "filepath": "C:\\Users\\mshar\\Projects\\Generalised Machine learning Benchmarks\\datasets\\diabetes.csv",
+    "target_column": "Outcome",
+    "n_samples": 768,
+    "n_features": 9,
+    "candidate_columns": [],
+    "overall_recommendation": "Safe for current StratifiedKFold",
+    "overall_confidence": "HIGH",
+    "overall_evidence": "No candidate grouping columns found in data.",
+    "prior_results_invalid": false
+  },
+  "heart": {
+    "dataset": "heart",
+    "filepath": "C:\\Users\\mshar\\Projects\\Generalised Machine learning Benchmarks\\datasets\\heart.csv",
+    "target_column": "target",
+    "n_samples": 1025,
+    "n_features": 14,
+    "candidate_columns": [],
+    "overall_recommendation": "Safe for current StratifiedKFold",
+    "overall_confidence": "HIGH",
+    "overall_evidence": "No candidate grouping columns found in data.",
+    "prior_results_invalid": false
+  }
+}
