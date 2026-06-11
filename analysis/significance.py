@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 
-from analysis.statistics import friedman_test, rank_models, validate_score_matrix, wilcoxon_signed_rank
+from analysis.statistics import corrected_resampled_t_test, friedman_test, rank_models, validate_score_matrix, wilcoxon_signed_rank
 
 
 def nemenyi_q_alpha(k: int, alpha: float = 0.05) -> float:
@@ -156,5 +156,90 @@ def global_significance_analysis(score_matrix: np.ndarray, model_names: Optional
         'friedman': friedman,
         'nemenyi': nemenyi,
         'pairwise_wilcoxon': pairwise,
+        'ranking_table': rankings,
+    }
+
+
+def pairwise_corrected_t_tests(
+    score_matrix: np.ndarray,
+    model_names: Optional[Sequence[str]] = None,
+    n_splits: int = 10,
+    alpha: float = 0.05,
+) -> pd.DataFrame:
+    """Pairwise Nadeau-Bengio corrected resampled t-tests with Holm-Bonferroni.
+
+    Suitable for single-dataset benchmarking where rows are repeated CV fold
+    observations.  Uses corrected_resampled_t_test() for each model pair to
+    account for training-set overlap, then applies Holm-Bonferroni to control
+    family-wise error rate.
+
+    Returns a DataFrame with the same column schema as pairwise_wilcoxon()
+    for drop-in compatibility.
+    """
+    matrix = validate_score_matrix(
+        score_matrix, model_names,
+        procedure='Pairwise corrected t-test comparison',
+    )
+    names = (
+        list(model_names) if model_names is not None
+        else [f'model_{i}' for i in range(matrix.shape[1])]
+    )
+    rows: List[Dict[str, Any]] = []
+    for i, j in combinations(range(matrix.shape[1]), 2):
+        result = corrected_resampled_t_test(
+            matrix[:, i], matrix[:, j], n_splits=n_splits,
+        )
+        rows.append({
+            'model_a': names[i],
+            'model_b': names[j],
+            'statistic': result['statistic'],
+            'p_value': result['p_value'],
+            'significant': result['significant'],
+            'decision': 'reject null' if result['significant'] else 'fail to reject null',
+        })
+    pairwise = pd.DataFrame(rows)
+    if not pairwise.empty:
+        adjusted, reject = holm_bonferroni(
+            pairwise['p_value'].to_numpy(dtype=float), alpha=alpha,
+        )
+        pairwise['p_value_raw'] = pairwise['p_value']
+        pairwise['p_value_adj'] = adjusted
+        pairwise['significant'] = reject
+        pairwise['decision'] = [
+            'reject null' if flag else 'fail to reject null'
+            for flag in reject
+        ]
+    return pairwise
+
+
+def analyze_singledataset_significance(
+    score_matrix: np.ndarray,
+    model_names: Optional[Sequence[str]] = None,
+    n_splits: int = 10,
+    alpha: float = 0.05,
+    higher_is_better: bool = True,
+) -> Dict[str, Any]:
+    """Statistical significance analysis for single-dataset repeated CV benchmarks.
+
+    Uses the Nadeau-Bengio corrected resampled t-test for pairwise model
+    comparisons (appropriate when rows are CV fold observations from a single
+    dataset) and Holm-Bonferroni correction for multiple comparisons.
+
+    Does NOT apply Friedman or Nemenyi tests, which require independent
+    observations (i.e. multiple datasets).
+    """
+    matrix = validate_score_matrix(
+        score_matrix, model_names,
+        procedure='Single-dataset significance analysis',
+        min_observations=2,
+    )
+    pairwise = pairwise_corrected_t_tests(
+        matrix, model_names=model_names, n_splits=n_splits, alpha=alpha,
+    )
+    rankings = rank_models(
+        matrix, model_names=model_names, higher_is_better=higher_is_better,
+    )
+    return {
+        'pairwise_corrected_t': pairwise,
         'ranking_table': rankings,
     }

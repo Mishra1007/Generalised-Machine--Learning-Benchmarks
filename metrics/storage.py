@@ -31,6 +31,39 @@ try:
 except Exception:
     import importlib_metadata  # type: ignore
 
+"""Result storage and reproducible logging for benchmark runs.
+
+Creates a results/<dataset>/ folder with:
+- raw_results.csv
+- normalized_results.csv
+- cbs_scores.csv
+- plots/ (saved plots)
+- logs.txt (structured JSON lines)
+- config.json (experiment config)
+
+Design notes:
+- Records environment info (python, platform, git commit if available).
+- Uses structured JSON-lines logging for traceability.
+"""
+
+from typing import Dict, Any, Tuple
+import os
+import json
+import csv
+import sys
+import datetime
+import logging
+import subprocess
+import platform
+import tempfile
+from pathlib import Path
+
+try:
+    # Python 3.8+
+    import importlib.metadata as importlib_metadata
+except Exception:
+    import importlib_metadata  # type: ignore
+
 import pandas as pd
 
 from metrics.normalization import normalize_model_summaries
@@ -40,7 +73,7 @@ from reproducibility import build_experiment_manifest, render_reproducibility_re
 from analysis import (
     bootstrap_confidence_interval,
     effect_size_summary,
-    global_significance_analysis,
+    analyze_singledataset_significance,
     mean_confidence_interval,
     write_significance_artifacts,
 )
@@ -427,11 +460,23 @@ def save_experiment_results(dataset_name: str, models_summaries: Dict[str, Dict[
 
     if validation_results:
         try:
-            matrix, model_names = _build_score_matrix(validation_results, primary_metric='accuracy')
+            primary_metric = 'accuracy'
+            if config and 'evaluation' in config:
+                primary_metric = config['evaluation'].get('primary_metric', 'accuracy')
+
+            matrix, model_names = _build_score_matrix(validation_results, primary_metric=primary_metric)
             if matrix is not None and len(model_names) >= 2:
                 import numpy as np
 
-                analysis = global_significance_analysis(np.asarray(matrix, dtype=float), model_names=model_names)
+                n_splits = 10
+                if metadata and 'validation_strategy' in metadata:
+                    n_splits = metadata['validation_strategy'].get('n_splits', 10)
+
+                analysis = analyze_singledataset_significance(
+                    np.asarray(matrix, dtype=float), 
+                    model_names=model_names,
+                    n_splits=n_splits
+                )
 
                 ci_rows = []
                 for idx, model_name in enumerate(model_names):
@@ -447,7 +492,7 @@ def save_experiment_results(dataset_name: str, models_summaries: Dict[str, Dict[
                         'bootstrap_ci_upper': boot_ci['upper'],
                     })
 
-                pairwise = analysis['pairwise_wilcoxon'].copy()
+                pairwise = analysis['pairwise_corrected_t'].copy()
                 effect_rows = []
                 for _, row in pairwise.iterrows():
                     idx_a = model_names.index(row['model_a'])
@@ -455,10 +500,15 @@ def save_experiment_results(dataset_name: str, models_summaries: Dict[str, Dict[
                     matrix_arr = np.asarray(matrix, dtype=float)
                     effect = effect_size_summary(matrix_arr[:, idx_a], matrix_arr[:, idx_b], paired=True)
                     effect_rows.append(effect)
+                
                 if effect_rows:
                     effect_df = pd.DataFrame(effect_rows)
                     pairwise = pd.concat([pairwise.reset_index(drop=True), effect_df.reset_index(drop=True)], axis=1)
-                    analysis['pairwise_wilcoxon'] = pairwise
+                    analysis['pairwise_corrected_t'] = pairwise
+                
+                # Commit 4 constraints
+                analysis['significance_method'] = 'corrected_resampled_t_test'
+                analysis['pairwise_wilcoxon'] = analysis['pairwise_corrected_t']
 
                 if ci_rows:
                     analysis['confidence_intervals'] = pd.DataFrame(ci_rows)

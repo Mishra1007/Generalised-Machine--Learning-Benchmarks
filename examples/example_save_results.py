@@ -55,8 +55,34 @@ def main():
         'notes': 'Demo run for storage example'
     }
 
+    class MockFoldResult:
+        def __init__(self, rep, fold, acc):
+            self.repetition_id = rep
+            self.fold_id = fold
+            self.metrics = {'accuracy': acc}
+
+    class MockValResult:
+        def __init__(self, accuracies):
+            self.fold_results = [
+                MockFoldResult(0, i, acc) for i, acc in enumerate(accuracies)
+            ]
+
+    # Dummy validation_results so significance testing triggers
+    validation_results = {
+        'LogisticRegression': MockValResult([0.86, 0.85, 0.87, 0.84, 0.86]),
+        'RandomForest': MockValResult([0.91, 0.92, 0.90, 0.91, 0.93]),
+        'SVM': MockValResult([0.87, 0.88, 0.86, 0.87, 0.89])
+    }
+
     print('Saving experiment results for demo_dataset')
-    saved = save_experiment_results('demo_dataset_storage', models, out_root='results', config=config, seed=42)
+    saved = save_experiment_results(
+        'demo_dataset_storage', 
+        models, 
+        out_root='results', 
+        config=config, 
+        seed=42,
+        validation_results=validation_results
+    )
     print('Saved:', saved)
 
 

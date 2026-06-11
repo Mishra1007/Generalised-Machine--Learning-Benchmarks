@@ -85,6 +85,80 @@ def wilcoxon_signed_rank(x: Iterable[float], y: Iterable[float], zero_method: st
     }
 
 
+def corrected_resampled_t_test(
+    x: Iterable[float],
+    y: Iterable[float],
+    n_splits: int,
+    ddof: int = 1,
+) -> Dict[str, Any]:
+    """Nadeau-Bengio corrected resampled t-test for repeated k-fold CV.
+
+    Corrects the variance estimate to account for the non-independence of
+    train/test overlaps in repeated cross-validation.
+
+    Parameters
+    ----------
+    x, y : Iterable[float]
+        Paired metric observations (one per fold across all repeats).
+    n_splits : int
+        Number of folds *K* in the cross-validation. Must be > 1.
+        The correction ratio is ``1 / (K - 1)``.
+    ddof : int, optional
+        Delta degrees of freedom for the sample variance (default 1).
+
+    Returns
+    -------
+    Dict[str, Any]
+        Keys: ``statistic``, ``p_value``, ``significant``.
+
+    References
+    ----------
+    Nadeau, C. & Bengio, Y. (2003). *Inference for the generalization error*.
+    Machine Learning, 52(3), 239-281.
+    """
+    arr_x, arr_y = validate_paired_observations(
+        x, y, procedure='Corrected Resampled t-test'
+    )
+    if n_splits <= 1:
+        raise ValueError(
+            'Corrected Resampled t-test requires n_splits > 1 '
+            f'(got {n_splits})'
+        )
+
+    diff = arr_x - arr_y
+    n = len(diff)
+    mean_diff = float(diff.mean())
+    var_diff = float(np.var(diff, ddof=ddof))
+
+    # Nadeau-Bengio correction: (1/n) + (1/(K-1))
+    correction = (1.0 / n) + (1.0 / (n_splits - 1))
+    corrected_var = var_diff * correction
+
+    # Zero-variance protection
+    if corrected_var <= 0.0:
+        if mean_diff == 0.0:
+            return {
+                'statistic': 0.0,
+                'p_value': 1.0,
+                'significant': False
+            }
+        else:
+            return {
+                'statistic': float('inf') if mean_diff > 0 else float('-inf'),
+                'p_value': 0.0,
+                'significant': True
+            }
+
+    t_stat = mean_diff / sqrt(corrected_var)
+    p_value = 2.0 * stats.t.cdf(-abs(t_stat), df=n - 1)
+
+    return {
+        'statistic': float(t_stat),
+        'p_value': float(p_value),
+        'significant': bool(p_value < 0.05),
+    }
+
+
 def mean_confidence_interval(values: Iterable[float], confidence: float = 0.95) -> Dict[str, float]:
     arr = _as_array(values)
     if len(arr) < 2:

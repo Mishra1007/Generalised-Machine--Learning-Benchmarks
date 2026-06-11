@@ -10,7 +10,9 @@ from analysis.effect_size import (
 from analysis.reports import build_significance_report, write_significance_artifacts
 from analysis.cbs_validation import CBSValidationArtifacts, run_cbs_validation
 from analysis.significance import (
+    analyze_singledataset_significance,
     global_significance_analysis,
+    holm_bonferroni,
     nemenyi_critical_difference,
     nemenyi_q_alpha,
     nemenyi_test,
@@ -25,6 +27,7 @@ from analysis.statistics import (
 )
 
 __all__ = [
+    'analyze_singledataset_significance',
     'bootstrap_confidence_interval',
     'build_significance_report',
     'CBSValidationArtifacts',
@@ -33,6 +36,7 @@ __all__ = [
     'effect_size_summary',
     'friedman_test',
     'global_significance_analysis',
+    'holm_bonferroni',
     'interpret_cliffs_delta',
     'interpret_cohens_d',
     'mean_confidence_interval',

@@ -7,12 +7,12 @@
   },
   "meta": {
     "dataset": "demo_dataset_storage",
-    "timestamp": "2026-05-07T19:03:59.788391Z",
+    "timestamp": "2026-06-11T19:29:12.328711Z",
     "seed": 42,
     "project_root": "C:\\Users\\mshar\\Projects\\Generalised Machine learning Benchmarks",
     "git": {
-      "git_commit": null,
-      "git_dirty": null
+      "git_commit": "d94eb81",
+      "git_dirty": true
     },
     "env": {
       "python_version": "3.11.0 (main, Oct 24 2022, 18:26:48) [MSC v.1933 64 bit (AMD64)]",
