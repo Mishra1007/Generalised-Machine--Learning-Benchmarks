@@ -508,7 +508,6 @@ def save_experiment_results(dataset_name: str, models_summaries: Dict[str, Dict[
                 
                 # Commit 4 constraints
                 analysis['significance_method'] = 'corrected_resampled_t_test'
-                analysis['pairwise_wilcoxon'] = analysis['pairwise_corrected_t']
 
                 if ci_rows:
                     analysis['confidence_intervals'] = pd.DataFrame(ci_rows)

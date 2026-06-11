@@ -15,9 +15,12 @@ def _format_value(value: Any) -> str:
 
 
 def build_significance_report(analysis: Dict[str, Any]) -> str:
+    significance_method = analysis.get('significance_method', '')
+    is_single_dataset = significance_method == 'corrected_resampled_t_test' or 'pairwise_corrected_t' in analysis
+
     friedman = analysis.get('friedman', {})
     nemenyi = analysis.get('nemenyi', {})
-    pairwise = analysis.get('pairwise_wilcoxon', pd.DataFrame())
+    pairwise = analysis.get('pairwise_corrected_t', analysis.get('pairwise_wilcoxon', pd.DataFrame()))
     rankings = analysis.get('ranking_table', pd.DataFrame())
     intervals = analysis.get('confidence_intervals', pd.DataFrame())
 
@@ -25,19 +28,32 @@ def build_significance_report(analysis: Dict[str, Any]) -> str:
         '# Significance Report',
         '',
         '## Test Assumptions',
-        '- Friedman: paired comparisons across the same datasets/folds.',
-        '- Wilcoxon Signed-Rank: paired sample differences per model pair.',
-        '- Nemenyi: post-hoc multiple comparison after Friedman.',
-        '',
-        '## Statistical Outputs',
-        f"Friedman statistic: {_format_value(friedman.get('statistic'))}",
-        f"Friedman p-value: {_format_value(friedman.get('p_value'))}",
-        f"Friedman interpretation: {friedman.get('interpretation')}",
-        f"Nemenyi critical difference: {_format_value(nemenyi.get('critical_difference'))}",
+    ]
+
+    if is_single_dataset:
+        lines.extend([
+            '- Corrected Resampled t-test (Nadeau-Bengio): protects against inflated Type I error due to overlapping training sets in repeated k-fold cross-validation.',
+            '- Holm-Bonferroni: controls Family-Wise Error Rate (FWER) across multiple pairwise comparisons.',
+            '- Note: Friedman and Nemenyi tests are strictly omitted for single-dataset benchmarks because cross-validation folds violate the independence assumptions required by these tests.',
+        ])
+    else:
+        lines.extend([
+            '- Friedman: paired comparisons across independent datasets.',
+            '- Wilcoxon Signed-Rank: paired sample differences per model pair across independent datasets.',
+            '- Nemenyi: post-hoc multiple comparison after Friedman.',
+            '',
+            '## Statistical Outputs',
+            f"Friedman statistic: {_format_value(friedman.get('statistic'))}",
+            f"Friedman p-value: {_format_value(friedman.get('p_value'))}",
+            f"Friedman interpretation: {friedman.get('interpretation')}",
+            f"Nemenyi critical difference: {_format_value(nemenyi.get('critical_difference'))}",
+        ])
+
+    lines.extend([
         '',
         '## Conclusions',
         'Use the comparison_table.csv for pairwise significance and ranking_table.csv for publication-ready ordering.',
-    ]
+    ])
 
     if isinstance(intervals, pd.DataFrame) and not intervals.empty:
         lines.extend(['', '## Confidence Intervals'])
@@ -47,7 +63,8 @@ def build_significance_report(analysis: Dict[str, Any]) -> str:
             )
 
     if isinstance(pairwise, pd.DataFrame) and not pairwise.empty:
-        lines.extend(['', '## Pairwise Wilcoxon Summary'])
+        summary_title = 'Pairwise Corrected t-test Summary' if is_single_dataset else 'Pairwise Wilcoxon Summary'
+        lines.extend(['', f'## {summary_title}'])
         for _, row in pairwise.iterrows():
             raw_p = row.get('p_value_raw', row.get('p_value'))
             adj_p = row.get('p_value_adj', None)
@@ -81,7 +98,7 @@ def write_significance_artifacts(
     ranking_path = target / 'ranking_table.csv'
 
     report_path.write_text(build_significance_report(analysis), encoding='utf8')
-    pairwise = analysis.get('pairwise_wilcoxon', pd.DataFrame())
+    pairwise = analysis.get('pairwise_corrected_t', analysis.get('pairwise_wilcoxon', pd.DataFrame()))
     rankings = analysis.get('ranking_table', pd.DataFrame())
     if isinstance(pairwise, pd.DataFrame):
         pairwise.to_csv(comparison_path, index=False)
